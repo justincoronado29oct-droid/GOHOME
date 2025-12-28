@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "N_usuario": "ADRIAN",
+    "gmail": "justindelgadocoronado@gmail.com",
+    "contrasena": "12345"
+  },
+  {
+    "id": 3,
+    "N_usuario": "JUSTIN",
+    "gmail": "justindelgadocoronado@gmail.com",
+    "contrasena": "12345"
+  },
+  {
+    "id": 4,
+    "N_usuario": "ALGO",
+    "gmail": "justindelgadocoronado@gmail.com",
+    "contrasena": "12345"
+  },
+  {
+    "id": 5,
+    "N_usuario": "AW",
+    "gmail": "aaaaa@gmail.com",
+    "contrasena": "123456789"
+  }
+]

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <script  src="https://cdn.jsdelivr.net/npm/sweetalert"></script>
+    <title>Document</title>
+    <link rel="stylesheet" href="/Css/login_registrer.CSS">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+ <script  src="https://cdn.jsdelivr.net/npm/sweetalert"></script>
+</head>
+<body>
+    <!-- login -->
+    <!-- pantalla de carga -->
+    <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <div class="loading-text">Procesando...</div>
+      </div>
+    </div>
+        <div class="login visible" id="loginB">
+            <div class="decoracion_login">
+                <!-- titulo -->
+                <div class="cont" id="titi">
+                  <h1 class="titulo">¡Bienvenido</h1>
+                <h1 class="titulo" id="t2"> de nuevo!</h1>
+                </div>
+                <!-- subtitulo -->
+          <h3 class="subtitle" id="subt">ingrese los datos correspondientes para iniciar sesión</h3>
+            </div>
+            <!-- formulario -->
+                <form  class="log" id="login">
+                  <!-- contenerdor login -->
+                <div id="logiin">
+                   <!-- icono de encabezado -->
+          <img src="/img/usuario.png" alt="Usuarioicon.png" class="userIcon">
+         <!-- encabezado -->
+         <h1>Iniciar sesión</h1>
+          <!-- nombre  -->
+           <input type="text" class="l" placeholder="Nombre de usuario" id="N" required>
+           <br>
+        <!-- contrasena -->
+           <input type="password" class="l" placeholder="Ingresa contraseña" id="C" required>
+           <img src="/img/visibility_off.png" alt="ojo_cerrao" class="eye_close ojo" id="MostrarContrasena">
+           <br>
+           <!--radiobuttons-->
+           <input type="radio" name="recordar" id="recordarC"> 
+           <label for="recordarC" class="textoC">Recordar contraseña</label>
+           <a href="restaurarC.html" class="olvideC">Olvidé mi contraseña</a>
+            <br>
+            <!-- boton -->
+             <button type="button" id="btn_login">Iniciar sesión</button>
+             <br>
+             <!-- redirigir a crear cuenta si no tienes cuenta -->
+              <p>¿No tienes una cuenta?</p>
+               <a href="#" class="registrerlink" id="btnregistrer">¡Crea una!</a>
+                </div>
+
+               <!-- registrer  -->
+               <div class="swap oculto" id="registrer">
+                 <img src="/img/agregar-contacto.png" alt="agregar_usuario.png" class="registrerimg">
+                 <!-- encabezado -->
+                 <h1 class="encabeswap" id="hh">Crear cuenta</h1>
+                 <!-- nombre -->
+                  <input type="text" class="l" placeholder="Nombre" id="nombre">
+                  <br>
+                  <!-- apellido -->
+                   <input type="text" class="l" placeholder="Apellido" id="apellido">
+                   <br>
+                   <!-- nombre de usuario -->
+                    <input type="text" class="l" placeholder="Nombre de usuario" id="nombre_usuario">
+                    <br>
+                   <!-- Gmail -->
+                    <input type="email" class="l" placeholder="Correo electrónico" id="gmail" required>
+                    <br>
+                    <!-- contraseña -->
+                     
+           <img src="/img/visibility_off.png" alt="ojo_cerrao" class=" EYE" id="MostrarContrasenaa">
+                    <input type="password" class="l" placeholder="Contraseña" id="contrasena">
+                    <br>
+                    <!-- boton registrer -->
+                    <button type="button" id="registrar" class="btn_registrer">Crear cuenta</button>
+                    <br>
+                    <!-- redirigir a iniciar sesión si tienes cuenta -->
+                     <div class="linksR">
+                      <p>¿Ya tienes una cuenta?</p>
+                        <a href="#" id="btnLogin">Registrarse</a>
+                     </div>
+                    
+               </div>
+    </form>
+        </div>
+          
+</body>
+  <script src="/JS/login_registrer.js"></script>
+</body>
+</html>

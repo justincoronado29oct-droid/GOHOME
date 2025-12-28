@@ -1,0 +1,661 @@
+/* font family */
+
+*{
+    padding: 0;
+    margin: 0;
+    font-family:"Open Sans", sans-serif;
+    scroll-behavior: smooth;
+}
+
+/* variables de color */
+:root{
+    --color_fondo:#ffffff;
+    --color_caja:#13acd2f9;
+    --color_texto:#0c0535;
+    --color_diseno:#42e1e7;
+    --color_links:#0e4751;
+    --color_input:#fbfeff92;
+    --color_placeholder:#05083d65;
+    --color_links:#116372cc;
+    --color_botonL:#095e6f;
+    --color_botonL_hover:#07717f;
+    --color-subtitle:#9c9c9ce2;
+
+
+    /* swap */
+    --bc_diseno_swap:#10f0f8;
+    --color_linksSwap:#09696c;
+}
+
+/* body */
+html{
+    background-color: var(--color_fondo);
+}
+/* iniciar sesion */
+.login{
+    background: linear-gradient( 135deg ,var(--color_caja),#07677ff9);
+    width: 100%;
+    height: 865px;
+    color: var(--color_texto);
+    overflow: hidden;
+    transition: .6s ease-in-out;
+}
+/* titulo del login */
+.cont{
+   margin-top: 100px;
+   transition: .7s ease-in-out;
+}
+.titulo{
+    font-size: 80px;
+    margin-left: 4pc;
+    color: #fbfefff1;
+}
+.decoracion_login{
+    margin-top: 190px;
+}
+/* subtitulos */
+.subtitle{
+    margin-left: 3pc;
+    color: #c4eaf7f7;
+    transition: .7s ease-in-out;
+    font-weight: 400;
+}
+/* input login */
+.log{
+    margin-left: 35pc;
+    margin-top: -43pc;
+    text-align: center;
+    font-family: "poppins",sans-serif;
+    background-color: var(--color_diseno);
+    width: 1600px;
+    height: 1600px;
+    box-sizing: border-box;
+    padding-top: 22pc;
+    padding-right: 12pc;
+    border-radius: 100%;
+    transition: .6s ease-in-out;
+}
+/* imagen del encabezado */
+.userIcon{
+    width: 200px;
+    height: 200px;
+    color:var(--color_iconoL);
+    transition: .4s ease-in-out;
+}
+.userIcon:hover{
+     transform: scale(1.2);
+     transform: rotate(360deg);
+}
+/* encabezado del formulario */
+.log h1{
+    font-size: 70px;
+    font-weight: bold;
+    margin-top: -30px;
+    margin-bottom: 20px;
+    transition: .4s ease-in-out;
+    color: #0b4f68;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+#logiin{
+    margin-top: -20px;
+    margin-left: -300px;
+}
+
+/* nombre de usuario */
+#N{
+    width: 500px;
+    height: 50px;
+    padding-left: 20px;
+    padding-top: 5px;
+    padding-bottom: 8px;
+    background-color: var(--color_input);
+    border-style: none;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    color: var(--color_placeholder);
+    font-size: 29px;
+    transition: .2s ease-in-out;
+}
+
+#N::placeholder{
+    font-size: 22px;
+    color:var(--color_placeholder);
+}
+
+#N:focus{
+    outline: none;
+}
+/* hover */
+#N:hover{
+   background-color: #ffffff;
+   cursor: pointer;
+}
+/* contrasena */
+#C{
+     width: 500px;
+    height: 50px;
+    padding-left: 20px;
+    padding-top: 5px;
+    padding-bottom: 8px;
+    background-color: var(--color_input);
+    border-style: none;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    color: var(--color_placeholder);
+    font-size: 29px;
+    transition: .2s ease-in-out;
+}
+
+#C::placeholder{
+    font-size: 22px;
+    color:var(--color_placeholder);
+}
+/* hover */
+#C:hover{
+   background-color: #ffffff;
+   cursor: pointer;
+}
+#C:focus{
+    outline: none;
+}
+.eye_close{
+    z-index: 100;
+    position: absolute;
+    margin-left: -44px;
+    height: 34px;
+    width: 34px;
+    margin-top: 15px;
+
+}
+
+.eye_close:hover{
+    cursor: pointer;
+}
+/* recordar contrasena */
+.textoC{
+    margin-right: 60px;
+    font-family: sans-serif;
+    color: var(--color_links);
+}
+.textoC:hover{
+    cursor: pointer;
+}
+#recordarC:hover{
+    cursor: pointer;
+}
+/* olvide mi contrasena */
+.olvideC{
+    color:var(--color_links);
+    margin-top: -10px;
+    font-weight: 700;
+}
+/* btn de login */
+#btn_login{
+    margin-top: 10px;
+    width: 340px;
+    height: 50px;
+    border: none;
+    border-radius: 30px;
+    background-color: var(--color_botonL);
+    color: #ffffff;
+    font-size: 19px;
+    font-weight: bold;
+    transition: .2s ease-in-out;
+    margin-bottom: 10px;
+}
+/* btn hover */
+#btn_login:hover{
+    background-color: var(--color_botonL_hover);
+    cursor: pointer;
+}
+.registrerlink{
+    font-size: 19px;
+    font-weight: bold;
+}
+/* link a registrer */
+.registrerlink{
+    color: var(--color_links);
+}
+/* registrer */
+.swap{
+    margin-top: -37pc;
+    transition: .4s ease-in-out;
+    margin-left: -270px;
+    
+}
+/* encabezado */
+.encabeswap{
+    margin-left: -30px;
+}
+/* imagen del registrer */
+.registrerimg{
+     width: 120px;
+    height: 120px;
+    transition: .4s ease-in-out;
+    margin-left: -15px;
+}
+.registrerimg:hover{
+     transform: scale(1.1);
+     transform: rotateY('90deg');
+}
+/* nombre */
+#nombre{
+   width: 500px;
+    height: 50px;
+    padding-left: 20px;
+    padding-top: 5px;
+    background-color: var(--color_input);
+    border-style: none;
+    border-radius: 20px;
+    color: var(--color_placeholder);
+    font-size:19px;
+    margin-left: -32px;
+    transition: .2s ease-in-out;
+    margin-bottom: 5px;
+}
+#nombre::placeholder{
+    font-size: 22px;
+    color:var(--color_placeholder);
+}
+/* hover */
+#nombre:hover{
+ background-color: #ffffff;
+   cursor: pointer;
+}
+#nombre:focus{
+    outline: none;
+}
+
+/* apellido */
+#apellido{
+   width: 500px;
+    height: 50px;
+    padding-left: 20px;
+    padding-top: 5px;
+    background-color: var(--color_input);
+    border-style: none;
+    border-radius: 20px;
+    margin-top: 4px;
+    margin-bottom: 10px;
+    color: var(--color_placeholder);
+    font-size:19px;
+    margin-left: -32px;
+    transition: .2s ease-in-out;
+}
+#apellido::placeholder{
+   font-size: 22px;
+    color:var(--color_placeholder);
+}
+#apellido:hover{
+   background-color: #ffffff;
+   cursor: pointer;
+}
+#apellido:focus{
+    outline: none;
+}
+/* Nombre de usuario */
+#nombre_usuario{
+    width: 500px;
+    height: 50px;
+    padding-left: 20px;
+    padding-top: 5px;
+    background-color: var(--color_input);
+    border-style: none;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    margin-left: -32px;
+    color: var(--color_placeholder);
+    font-size:19px;
+    transition: .2s ease-in-out;
+}
+#nombre_usuario::placeholder{
+    font-size: 22px;
+    color:var(--color_placeholder);
+}
+#nombre_usuario:hover{
+   background-color: #ffffff;
+   cursor: pointer;
+}
+#nombre_usuario:focus{
+    outline: none;
+}
+/* gmail */
+#gmail{
+    width: 500px;
+    height: 50px;
+    padding-left: 20px;
+    padding-top: 5px;
+    background-color: var(--color_input);
+    border-style: none;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    margin-left: -32px;
+    color: var(--color_placeholder);
+    font-size:19px;
+    transition: .2s ease-in-out;
+}
+#gmail::placeholder{
+   font-size: 22px;
+    color:var(--color_placeholder);
+}
+#gmail:hover{
+   background-color: #ffffff;
+   cursor: pointer;
+}
+#gmail:focus{
+    outline: none;
+}
+/* ojo registrer */
+#MostrarContrasenaa{
+    margin-left: 300px;
+}
+/* contraseña */
+#contrasena{
+   width: 500px;
+    height: 50px;
+    padding-left: 23px;
+    padding-top: 5px;
+    margin-left: -32px;
+    background-color: var(--color_input);
+    border-style: none;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    color: var(--color_placeholder);
+    font-size:19px;
+    transition: .2s ease-in-out;
+}
+#contrasena::placeholder{
+   font-size: 22px;
+    color:var(--color_placeholder);
+}
+#contrasena:hover{
+   background-color: #ffffff;
+   cursor: pointer;
+}
+#contrasena:focus{
+    outline: none;
+}
+/* boton */
+.btn_registrer{
+    width: 400px;
+    height: 50px;
+    border: none;
+    margin-left: -32px;
+    border-radius: 50px;
+    background-color: var(--color_botonL);
+    color: #ffffff;
+    font-size: 19px;
+    font-weight: bold;
+    transition: .2s ease-in-out;
+    margin-bottom: 10px;
+}
+#registrar:hover{
+    background-color: #005866;
+    cursor: pointer;
+}
+#registrar:focus{
+    outline: none;
+}
+
+.EYE{
+    z-index: 100;
+    position: absolute;
+    margin-left: 74px;
+    height: 34px;
+    width: 34px;
+    margin-top: 12px;
+    padding-left: 150px;
+ }
+
+
+.linksR{
+    margin-left: -25px;
+}
+
+#btnLogin{
+    color: var(--color_linksSwap);
+    font-weight: bold;
+}
+
+/* transicion */
+/* login y registro oculto/visible */
+#logiin,
+#registrer {
+  transition: all 0.6s ease-in-out;
+}
+
+/* estado oculto */
+.oculto {
+  opacity: 0;
+  transform: translateX(-40px);
+  pointer-events: none;
+}
+
+/* estado visible */
+.visible {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: all;
+}
+
+@media (max-width: 900px) {
+    html, body { 
+        height: 100%; 
+        margin: 0;
+        padding: 0;
+    }
+
+    .login {
+        width: 95%;
+        max-width: 480px;
+        margin: 0 auto;
+        min-height: 100vh;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 20px;
+        overflow: hidden;
+        padding-top: 80px;
+        background-color: white;
+        width: 100%;
+    }
+    #logiin{
+        margin-left: 20px;
+        margin-top: -200px;
+    }
+    .cont { 
+        margin: 0;
+        text-align: center; 
+    }
+
+    .titulo, 
+    .subtitle { 
+        display: none; /* ocultamos títulos grandes en móvil */
+    }
+
+    /* formulario adaptado */
+    .log {
+        margin: 0 auto;
+        width: 100%;
+        max-width: 420px;
+        height: auto;
+        padding: 30px 20px;
+        border-radius: 18px;
+        background-color: rgba(255, 255, 255, 0);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        margin-left: -3px;
+        padding-top: 110px;
+    }
+
+    #logiin{
+        background-color: var(--color_diseno);
+        padding-top: 20px;
+        padding-left: 20px;
+        border-radius: 18px;
+        padding-right: 20px;
+        padding-left: 20px;
+        width: auto;
+        height: auto;
+        transform: scale(1.4);
+        padding-bottom: 10px;
+    }
+
+    .swap{
+          background-color: var(--color_diseno);
+        padding-left: 40px;
+        border-radius: 18px;
+        padding-right: 40px;
+        padding-top: 60px;
+        width: auto;
+        height: auto;
+        transform: scale(1.1);
+    }
+
+    #registrer{
+        background-color: var(--color_diseno);
+        width: auto;
+        height: auto;
+        transform: scale(1.2);
+        padding-bottom: 10px;
+        margin-left: 20px;
+    }
+#N::placeholder{
+    font-size: 16px;
+}
+#C::placeholder{
+    font-size: 16px;
+}
+    .userIcon { 
+        width: 80px; 
+        height: 80px; 
+        margin-bottom: 10px;
+    }
+
+    .log h1 { 
+        font-size: 24px; 
+        text-align: center; 
+        margin-bottom: 12px;
+    }
+
+    /* inputs full width */
+    #N, #C, #nombre, #apellido, #nombre_usuario, #telefono, #contrasena {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 16px;
+        border-radius: 14px;
+        margin: 6px 0;
+        box-sizing: border-box;
+    }
+
+    
+
+    /* botones full width */
+    #btn_login, 
+    #registrar {
+        width: 100%;
+        padding: 14px;
+        font-size: 16px;
+        border-radius: 30px;
+        margin-top: 8px;
+    }
+
+     #registrar{
+        margin-left: 1px;
+     }
+
+    /* encabezado de regitrer */
+    #hh{
+        font-size: 30px;
+        margin-left: 2px;
+    }
+    /* imagen del registrer */
+    .registrerimg { 
+        width: 80px; 
+        height: 80px; 
+        margin: 0 auto 12px; 
+    }
+
+    .linksR { 
+        text-align: center; 
+        margin-top: 12px;
+        font-size: 15px;
+        margin-left: 3px;
+    }
+
+    #recordarC{
+        width: 10px;
+        height: 10px;
+    }
+    .textoC{
+        font-size: 12px;
+    }
+    .olvideC{
+        font-size: 12px;
+        margin-left: -90px;
+        padding-right: 30px;
+        padding-left: 50px;
+    }
+    #btnregistrer{
+        width: 100%;
+        padding: 14px;
+        font-size: 14px;
+        border-radius: 30px;
+        margin-top: 8px;
+        padding-bottom: 20px;
+    }
+    /* ojo de contraseña alineado */
+    .eye_close{
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        margin-top: 22px;
+        margin-left: -24px;
+    }
+}
+
+
+
+/* Loading overlay styles */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.loading-overlay[aria-hidden="false"]{
+    display: flex;
+}
+.loading-box{
+    width: 400px;
+    height: 100px;
+    background: #ffffff;
+    padding: 20px 28px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    text-align: center;
+}
+.spinner{
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 4px solid #eee;
+    border-top-color: var(--color_diseno);
+    animation: spin 1s linear infinite;
+    
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-weight:600;color:#333;font-size:18px;}

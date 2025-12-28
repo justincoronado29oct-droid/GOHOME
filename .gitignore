@@ -1,0 +1,10 @@
+# Node
+node_modules/
+npm-debug.log*
+.env
+.env.*
+.DS_Store
+
+# PM2
+.pids/
+logs/
