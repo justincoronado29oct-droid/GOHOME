@@ -494,7 +494,7 @@
     // remove DOM element
     const el = boxesContainer.querySelector(`.inquilino-box[data-id="${id}"]`);
     if (el) el.remove();
-
+  
     if (serverOk) {
       // if there was a queued delete, remove it
       dequeueDelete(id);
