@@ -16,12 +16,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(express.json());
 
-// --- Aquí va lo nuevo ---
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'HTML', 'index.html'));
 });
+
 
 
 
