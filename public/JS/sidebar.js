@@ -56,22 +56,28 @@ document.addEventListener('DOMContentLoaded', () => {
 // ======================================================
 (() => {
   const sectionMap = {
-    hom: 'home',
-    add_inqui: 'inquilinosCrudd',
-    add_house: 'CRUDDinmu',
-    inquilinos: 'INQUILINOS',
-    inmuebles: 'INMUEBLES',
-    papelera: 'papelera_section',
-    papeleo: 'inquilinosCrudd',
-    p_pendientes: 'pagos_pendientes',
-    p_incompletos: 'pagos_incompletos',
-    papelera: 'inquilinosCrudd'
-  };
+  hom: 'home',
+  add_inqui: 'inquilinosCrudd',
+  add_house: 'CRUDDinmu',
+  inquilinos: 'INQUILINOS',
+  inmuebles: 'INMUEBLES',
+  papeleo: 'papeleo_section',
+  papelera: 'papelera_section',
+  p_pendientes: 'pagos_pendientes',
+  p_incompletos: 'pagos_incompletos'
+};
 
-  const possibleSections = Array.from(new Set([
-    ...Object.values(sectionMap),
-    'home', 'inquilinosCrudd', 'INQUILINOS', 'pagos_pendientes'
-  ]));
+
+const possibleSections = Array.from(new Set([
+  ...Object.values(sectionMap),
+  'home',
+  'inquilinosCrudd',
+  'INQUILINOS',
+  'INMUEBLES',
+  'papeleo_section',
+  'papelera_section'
+]));
+
 
   const getDomElements = () => {
     const sidebar = document.getElementById('sidebar');
@@ -190,14 +196,4 @@ document.addEventListener('DOMContentLoaded', () => {
     init();
   }  }) ()
 
-  // === Forzar ir a HOME al recargar la página ===
-window.addEventListener("load", () => {
-  const homeSection = document.getElementById("home");
-  if (homeSection) {
-    homeSection.scrollIntoView({ behavior: "instant", block: "start" });
-  }
-  // También controla la URL si usas navegación por hash
-  if (location.hash !== "#home") {
-    location.hash = "#home";
-  }
-});
+ 
