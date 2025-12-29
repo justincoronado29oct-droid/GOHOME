@@ -9,20 +9,21 @@ const path = require("path");
 
 mysql://root:dygyimgYzGMSTOormbYOcJvzLuiiQfUE@switchyard.proxy.rlwy.net:10788/railway
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// 🔥 SERVIR FRONTEND
-app.use("/JS", express.static(path.join(__dirname, "JS")));
-app.use("/CSS", express.static(path.join(__dirname, "CSS")));
-app.use("/IMG", express.static(path.join(__dirname, "IMG")));
-app.use("/HTML", express.static(path.join(__dirname, "HTML")));
-app.use(express.static(path.join(__dirname, "HTML")));
+app.use(express.static(path.join(__dirname)));// Servir archivos estáticos (CSS, JS, HTML)
+app.use(express.static(path.join(__dirname, 'public')));
 
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'HTML', 'index.html'));
-   res.sendFile(path.join(__dirname, "HTML", "LOGIN_REGISTRER.HTML"));
+
+app.use(express.json());
+
+// --- Aquí va lo nuevo ---
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+
 
 
 
