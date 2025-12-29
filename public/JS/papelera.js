@@ -1,102 +1,163 @@
-// papelera.js
-(() => {
-  const TRASH_KEY = 'papelera_inquilinos';
-  const TTL_DAYS = 20;
-  const DAY = 24 * 60 * 60 * 1000;
+/* ======================================================
+   🗑️ PAPELERA LOCAL (Inquilinos / Inmuebles)
+   ====================================================== */
 
-  const read = () => JSON.parse(localStorage.getItem(TRASH_KEY) || '[]');
-  const write = (arr) => localStorage.setItem(TRASH_KEY, JSON.stringify(arr));
+const TRASH_KEY = 'papelera_items';
 
-  const moveToTrash = (item) => {
-    if (!item || !item.id) return;
+/* =========================
+   Storage helpers
+   ========================= */
+function readTrash() {
+  try {
+    return JSON.parse(localStorage.getItem(TRASH_KEY)) || [];
+  } catch (e) {
+    console.warn('Error leyendo papelera', e);
+    return [];
+  }
+}
 
-    const trash = read();
-    if (trash.some(x => String(x.id) === String(item.id))) return;
+function writeTrash(items) {
+  localStorage.setItem(TRASH_KEY, JSON.stringify(items));
+}
 
-    trash.push({
-      ...item,
-      eliminado_en: Date.now(),
-      borrar_en: Date.now() + TTL_DAYS * DAY
+/* =========================
+   Mover a papelera
+   ========================= */
+function moveToTrash(item) {
+  if (!item || !item.id) return;
+
+  const trash = readTrash();
+
+  // evitar duplicados
+  if (trash.some(x => String(x.id) === String(item.id))) return;
+
+  trash.push({
+    ...item,
+    deletedAt: Date.now(),
+    type: item.N_casa ? 'inquilino' : 'inmueble'
+  });
+
+  writeTrash(trash);
+  console.log('🗑️ Movido a papelera:', item.id);
+}
+
+/* =========================
+   Renderizar papelera
+   ========================= */
+function renderTrash() {
+  const container = document.getElementById('papelera_lista');
+  if (!container) return;
+
+  const trash = readTrash();
+  container.innerHTML = '';
+
+  if (trash.length === 0) {
+    container.innerHTML = `
+      <div class="papelera_empty">
+        <p>La papelera está vacía 🧹</p>
+      </div>
+    `;
+    return;
+  }
+
+  trash.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'papelera_card';
+
+    card.innerHTML = `
+      <h3>${item.nombre || 'Sin nombre'}</h3>
+      <p><strong>Tipo:</strong> ${item.type}</p>
+      <p><strong>Eliminado:</strong> ${new Date(item.deletedAt).toLocaleDateString()}</p>
+
+      <div class="papelera_actions">
+        <button class="btn_restore">Restaurar</button>
+        <button class="btn_delete">Eliminar</button>
+      </div>
+    `;
+
+    card.querySelector('.btn_restore').addEventListener('click', () => {
+      restoreItem(item.id);
     });
 
-    write(trash);
-    renderTrash();
-  };
-
-  const removeFromTrash = (id) => {
-    write(read().filter(x => String(x.id) !== String(id)));
-    renderTrash();
-  };
-
-  const restoreFromTrash = (id) => {
-    const trash = read();
-    const item = trash.find(x => String(x.id) === String(id));
-    if (!item) return;
-
-    // volver al storage principal
-    const main = readBoxesStorage();
-    main.push(item);
-    writeBoxesStorage(main);
-
-    removeFromTrash(id);
-    location.hash = '#inquilinosCrudd';
-  };
-
-  const autoClean = () => {
-    const now = Date.now();
-    write(read().filter(x => x.borrar_en > now));
-  };
-
-  // 🔹 RENDER
-  const renderTrash = () => {
-    const container = document.getElementById('papelera_lista');
-    if (!container) return;
-
-    autoClean();
-    const trash = read();
-    container.innerHTML = '';
-
-    if (!trash.length) {
-      container.innerHTML = `<p style="opacity:.6">La papelera está vacía</p>`;
-      return;
-    }
-
-    trash.forEach(item => {
-      const div = document.createElement('div');
-      div.className = 'papelera-item';
-      div.innerHTML = `
-        <div>
-          <strong>${item.nombre || 'Sin nombre'}</strong>
-          <div style="font-size:.8rem;opacity:.7">
-            Se elimina definitivamente en 
-            ${Math.ceil((item.borrar_en - Date.now()) / DAY)} días
-          </div>
-        </div>
-        <div class="papelera-actions">
-          <button class="restore">↩ Restaurar</button>
-          <button class="delete">✖ Eliminar</button>
-        </div>
-      `;
-
-      div.querySelector('.restore').onclick = () => restoreFromTrash(item.id);
-      div.querySelector('.delete').onclick = () => {
-        Swal.fire({
-          title: 'Eliminar definitivamente',
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#ef4444'
-        }).then(r => r.isConfirmed && removeFromTrash(item.id));
-      };
-
-      container.appendChild(div);
+    card.querySelector('.btn_delete').addEventListener('click', () => {
+      deleteForever(item.id);
     });
-  };
 
-  // API GLOBAL
-  window.papelera = {
-    moveToTrash,
-    renderTrash
-  };
+    container.appendChild(card);
+  });
+}
 
-  document.addEventListener('DOMContentLoaded', renderTrash);
-})();
+/* =========================
+   Restaurar elemento
+   ========================= */
+function restoreItem(id) {
+  let trash = readTrash();
+  const item = trash.find(x => String(x.id) === String(id));
+  if (!item) return;
+
+  // quitar de papelera
+  trash = trash.filter(x => String(x.id) !== String(id));
+  writeTrash(trash);
+
+  // volver a lista principal
+  if (typeof readBoxesStorage === 'function' && typeof writeBoxesStorage === 'function') {
+    const items = readBoxesStorage();
+    items.push(item);
+    writeBoxesStorage(items);
+  }
+
+  // volver a render principal
+  if (typeof createBox === 'function') {
+    createBox(item);
+  }
+
+  renderTrash();
+
+  Swal.fire({
+    icon: 'success',
+    title: 'Restaurado',
+    text: 'El elemento volvió a la lista principal',
+    confirmButtonColor: '#10b981'
+  });
+}
+
+/* =========================
+   Eliminar definitivamente
+   ========================= */
+function deleteForever(id) {
+  Swal.fire({
+    title: 'Eliminar definitivamente',
+    text: 'Esta acción no se puede deshacer',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#10b981',
+    confirmButtonText: 'Eliminar',
+    cancelButtonText: 'Cancelar'
+  }).then(result => {
+    if (!result.isConfirmed) return;
+
+    const trash = readTrash().filter(x => String(x.id) !== String(id));
+    writeTrash(trash);
+    renderTrash();
+  });
+}
+
+/* =========================
+   API GLOBAL (para removeBox)
+   ========================= */
+window.papelera = {
+  moveToTrash,
+  renderTrash,
+  restoreItem,
+  deleteForever
+};
+
+/* =========================
+   Auto-render al entrar
+   ========================= */
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('papelera_lista')) {
+    renderTrash();
+  }
+});
