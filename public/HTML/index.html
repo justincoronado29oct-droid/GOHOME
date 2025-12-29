@@ -146,7 +146,7 @@
 
              <!-- icono -->
             <div class="iconinquilinos">
-               <div class="inquiinfo"><img src="/IMG/usuario (1).png" alt="" class="imgInqui"></div>
+               <div class="inquiinfo"><img src="/public/IMG/usuario (1).png" alt="" class="imgInqui"></div>
                 <h1 class="inquititle">Inquilinos</h1>
             </div>
 <div class="search-container">
@@ -237,7 +237,7 @@
   <!-- Encabezado de la sección -->
   <div class="iconInmuebles">
     <div class="inmu_icon">
-      <img src="/IMG/casa-silueta-negra-sin-puerta.png" alt="icono inmueble" class="imgInmu">
+      <img src="/public/IMG/casa-silueta-negra-sin-puerta.png" alt="icono inmueble" class="imgInmu">
     </div>
     <h1 class="inmu_title">Inmuebles registrados</h1>
   </div>
@@ -263,7 +263,7 @@
   <div class="circle_home papeleo"></div>
  <!-- Encabezado -->
   <div class="papeleo_header">
-    <img src="/IMG/carpeta.png" alt="icono papeleo" class="papeleo_icon">
+    <img src="/public/IMG/carpeta.png" alt="icono papeleo" class="papeleo_icon">
     <h1 class="papeleo_title">📄Papeleo</h1>
   </div>
 
@@ -295,7 +295,7 @@
     const isLoginPage = path.includes('login_registrer.html') || path.includes('/login_registrer');
     const currentUser = localStorage.getItem('currentUser');
     if (!currentUser && !isLoginPage) {
-      window.location.href = '/HTML/LOGIN_REGISTRER.HTML';
+      window.location.href = '/public/HTML/LOGIN_REGISTRER.HTML';
     }
   } catch(e) { console.warn('auth redirect error', e); }
 })();
