@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputDescripcion = document.getElementById('descript_inmuebles');
   const contenedorInmuebles = document.querySelector('.box_container_inmuebles');
 
-  const API_BASE = 'http://localhost:3001/inmuebles';
+  const API_BASE = (window.API_BASE || '') + '/inmuebles';
 
   // -----------------------------
   // Enviar petición genérica

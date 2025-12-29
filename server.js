@@ -8,17 +8,27 @@ const mysql = require('mysql2/promise');
 const app = express();
 const path = require("path");
 
+mysql://root:dygyimgYzGMSTOormbYOcJvzLuiiQfUE@switchyard.proxy.rlwy.net:10788/railway
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// FRONTEND
+// 🔥 SERVIR FRONTEND
 app.use("/JS", express.static(path.join(__dirname, "JS")));
 app.use("/CSS", express.static(path.join(__dirname, "CSS")));
 app.use("/IMG", express.static(path.join(__dirname, "IMG")));
 app.use("/HTML", express.static(path.join(__dirname, "HTML")));
+app.use(express.static(path.join(__dirname, "HTML")));
+
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'HTML', 'index.html'));
+});
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "HTML", "login.html"));
+  res.sendFile(path.join(__dirname, "HTML", "LOGIN_REGISTRER.HTML"));
 });
+
+
 
 
 
@@ -51,16 +61,17 @@ if (process.env.FORCE_HTTPS === '1') {
 // ----------------- CONFIG DB -----------------
 // IMPORTANT: move secrets to environment (.env) and DO NOT commit .env to git
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'containers-us-west-XX.railway.app',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASS || 'JaDc200817@))*',
+  password: process.env.DB_PASS || 'dygyimgYzGMSTOormbYOcJvzLuiiQfUE',
   database: process.env.DB_NAME || 'gohome_db_new',
-  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 10788,
   waitForConnections: true,
   connectionLimit: process.env.DB_CONN_LIMIT ? parseInt(process.env.DB_CONN_LIMIT, 10) : 10,
   queueLimit: 0,
   charset: process.env.DB_CHARSET || 'utf8mb4_unicode_ci',
-  timezone: process.env.DB_TIMEZONE || 'Z'
+  timezone: process.env.DB_TIMEZONE || 'Z',
+    ssl: { rejectUnauthorized: false }
 });
 
 // ----------------- HELPERS -----------------
@@ -901,6 +912,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime
 // ----------------- START SERVER -----------------
 let server = null;
 
+
 async function startServer() {
   try {
     await pool.query('SELECT 1');
@@ -944,5 +956,6 @@ process.on('SIGINT', shutdown('SIGINT'));
 process.on('SIGTERM', shutdown('SIGTERM'));
 process.on('uncaughtException', err => { console.error('uncaughtException', err); process.exit(1); });
 process.on('unhandledRejection', (reason) => { console.error('unhandledRejection', reason); });
+
 
 startServer();

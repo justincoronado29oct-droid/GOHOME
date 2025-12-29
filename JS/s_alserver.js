@@ -3,7 +3,7 @@
 // ================================
 
 // Función para enviar al servidor (versión mejorada)
-const API_BASE = "http://localhost:3001";
+const API_BASE = window.API_BASE || ''; // window.API_BASE set by JS/api.js ('' = mismo origen en producción, 'http://localhost:3001' en dev)
 
 async function enviarAlServer(endpoint, method = "POST", datos = null) {
   const opts = {

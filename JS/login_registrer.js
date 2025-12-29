@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
  async function sendToServer(endpoint, data) {
   try {
     showLoading();
-    const res = await fetch(`http://localhost:3001/${endpoint}`, {
+    const res = await apiFetch(`${endpoint}`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify(data)
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let fresh = user;
     try {
       if (user && user.id) {
-        const resp = await fetch(`http://localhost:3001/info_usuarios/${user.id}`);
+        const resp = await apiFetch(`info_usuarios/${user.id}`);
         if (resp.ok) {
           const json = await resp.json();
           if (json) { fresh = { ...user, ...json }; saveCurrentUser(fresh); }
@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let fresh = user;
     try {
       if (user && user.id) {
-        const resp = await fetch(`http://localhost:3001/info_usuarios/${user.id}`);
+        const resp = await apiFetch(`info_usuarios/${user.id}`);
         if (resp.ok) {
           const json = await resp.json();
           if (json) fresh = { ...user, ...json };
@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Comprueba si un gmail existe (llama al endpoint GET /info_usuarios?gmail=...)
   async function checkGmailExists(gmail){
     try {
-      const res = await fetch(`http://localhost:3001/info_usuarios?gmail=${encodeURIComponent(gmail)}`);
+      const res = await apiFetch(`info_usuarios?gmail=${encodeURIComponent(gmail)}`);
       if (!res.ok) return false;
       const body = await res.json();
       return !!(body && body.exists);
@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // si contraseña vacía, no la incluimos en el payload (no cambiarla)
         const updatePayload = { ...payload };
         if (!updatePayload.contrasena) delete updatePayload.contrasena;
-        resp = await fetch(`http://localhost:3001/info_usuarios/${editing.id}`, {
+        resp = await apiFetch(`info_usuarios/${editing.id}`, {
           method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(updatePayload)
         });
         body = await (resp.headers.get('content-type')?.includes('application/json') ? resp.json() : {});
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // si no es edición, crear nuevo usuario (POST)
-      resp = await fetch('http://localhost:3001/info_usuarios', {
+      resp = await apiFetch('info_usuarios', {
         method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
       });
       body = await (resp.headers.get('content-type')?.includes('application/json') ? resp.json() : {});

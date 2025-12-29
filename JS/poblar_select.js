@@ -1,6 +1,6 @@
 // casas-select.js — versión mejorada: sincroniza updates y deletes
 (function () {
-  const DEFAULTS = { apiBase: (window.API_BASE || 'http://localhost:3001'), preferServer: true, optionValueUseId: false, pollIntervalMs: 2000 };
+  const DEFAULTS = { apiBase: (window.API_BASE || ''), preferServer: true, optionValueUseId: false, pollIntervalMs: 2000 };
 
   // --------------------- UTIL: enviarAlServer ---------------------
   // Versión robusta que devuelve JSON o { error: true, ... } en fallo

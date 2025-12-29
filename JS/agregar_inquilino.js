@@ -6,7 +6,7 @@
   const DURATION_MS = 31 * 24 * 60 * 60 * 1000; // 31 días
   // Zona roja: a partir de 24 horas restantes
   const RED_ZONE_MS = 24 * 60 * 60 * 1000; // 24 horas
-  const API_BASE = 'http://localhost:3001';
+  const API_BASE = '';
   const MAX_DELETE_ATTEMPTS = 5;
 
   // Helper: convierte milisegundos a una cadena compacta incluyendo días, horas, minutos y segundos (ej. "2d 03h 05m 30s", "03h 25m 10s", "45m 30s", "00s")

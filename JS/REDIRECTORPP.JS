@@ -3,7 +3,7 @@
 (() => {
   const INQ_KEY = 'inquilinos_boxes_v1';
   const PENDING_KEY = 'pagos_pendientes_v1';
-  const API_BASE = 'http://localhost:3001';
+  const API_BASE = '';
 
   // ---------------- helpers ----------------
   const read = k => {
