@@ -4,7 +4,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const mysql = require('mysql2/promise');
 const app = express();
 const path = require("path");
 
@@ -22,10 +21,7 @@ app.use(express.static(path.join(__dirname, "HTML")));
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'HTML', 'index.html'));
-});
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "HTML", "LOGIN_REGISTRER.HTML"));
+   res.sendFile(path.join(__dirname, "HTML", "LOGIN_REGISTRER.HTML"));
 });
 
 
@@ -60,19 +56,31 @@ if (process.env.FORCE_HTTPS === '1') {
 
 // ----------------- CONFIG DB -----------------
 // IMPORTANT: move secrets to environment (.env) and DO NOT commit .env to git
+const mysql = require("mysql2/promise");
+
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'containers-us-west-XX.railway.app',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASS || 'dygyimgYzGMSTOormbYOcJvzLuiiQfUE',
-  database: process.env.DB_NAME || 'gohome_db_new',
-  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 10788,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+  port: Number(process.env.DB_PORT),
   waitForConnections: true,
-  connectionLimit: process.env.DB_CONN_LIMIT ? parseInt(process.env.DB_CONN_LIMIT, 10) : 10,
-  queueLimit: 0,
-  charset: process.env.DB_CHARSET || 'utf8mb4_unicode_ci',
-  timezone: process.env.DB_TIMEZONE || 'Z',
-    ssl: { rejectUnauthorized: false }
+  connectionLimit: 5,
+  connectTimeout: 30000,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
+
+(async () => {
+  try {
+    const conn = await pool.getConnection();
+    console.log("✅ Conectado a MySQL Railway");
+    conn.release();
+  } catch (err) {
+    console.error("❌ Error MySQL:", err.code, err.message);
+  }
+})();
 
 // ----------------- HELPERS -----------------
 async function query(sql, params = []) {
