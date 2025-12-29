@@ -1,57 +1,102 @@
-// Papelera global
-window.papelera = window.papelera || [];
+// papelera.js
+(() => {
+  const TRASH_KEY = 'papelera_inquilinos';
+  const TTL_DAYS = 20;
+  const DAY = 24 * 60 * 60 * 1000;
 
-// Función para agregar un elemento a la papelera
-function moverAPapelera(tipo, datos) {
-    const id = Date.now(); // ID único temporal
-    const item = { id, tipo, datos };
-    window.papelera.push(item);
-    actualizarPapeleraUI();
-}
+  const read = () => JSON.parse(localStorage.getItem(TRASH_KEY) || '[]');
+  const write = (arr) => localStorage.setItem(TRASH_KEY, JSON.stringify(arr));
 
-// Función para eliminar un elemento permanentemente
-function eliminarPermanente(id) {
-    window.papelera = window.papelera.filter(item => item.id !== id);
-    actualizarPapeleraUI();
-}
+  const moveToTrash = (item) => {
+    if (!item || !item.id) return;
 
-// Función para restaurar un elemento
-function restaurarElemento(id) {
-    const index = window.papelera.findIndex(item => item.id === id);
-    if(index !== -1){
-        const item = window.papelera[index];
-        // Aquí puedes decidir cómo restaurarlo según el tipo
-        // Ejemplo: volver a agregar a la lista original
-        if(item.tipo === 'inquilino'){
-            agregarInquilino(item.datos, true); // función que tengas para agregar inquilinos
-        } else if(item.tipo === 'inmueble'){
-            agregarInmueble(item.datos, true);
-        } else if(item.tipo === 'papeleo'){
-            agregarPapeleo(item.datos, true);
-        }
+    const trash = read();
+    if (trash.some(x => String(x.id) === String(item.id))) return;
 
-        eliminarPermanente(id);
-    }
-}
-
-// Función para actualizar la UI de la papelera
-function actualizarPapeleraUI() {
-    const contenedor = document.getElementById('papelera_lista');
-    contenedor.innerHTML = '';
-
-    if(window.papelera.length === 0){
-        contenedor.innerHTML = '<p>No hay elementos en la papelera.</p>';
-        return;
-    }
-
-    window.papelera.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'papelera_item';
-        div.innerHTML = `
-            <span><strong>${item.tipo.toUpperCase()}:</strong> ${item.datos.nombre || item.datos.titulo || 'Sin nombre'}</span>
-            <button onclick="restaurarElemento(${item.id})">Restaurar</button>
-            <button onclick="eliminarPermanente(${item.id})">Eliminar</button>
-        `;
-        contenedor.appendChild(div);
+    trash.push({
+      ...item,
+      eliminado_en: Date.now(),
+      borrar_en: Date.now() + TTL_DAYS * DAY
     });
-}
+
+    write(trash);
+    renderTrash();
+  };
+
+  const removeFromTrash = (id) => {
+    write(read().filter(x => String(x.id) !== String(id)));
+    renderTrash();
+  };
+
+  const restoreFromTrash = (id) => {
+    const trash = read();
+    const item = trash.find(x => String(x.id) === String(id));
+    if (!item) return;
+
+    // volver al storage principal
+    const main = readBoxesStorage();
+    main.push(item);
+    writeBoxesStorage(main);
+
+    removeFromTrash(id);
+    location.hash = '#inquilinosCrudd';
+  };
+
+  const autoClean = () => {
+    const now = Date.now();
+    write(read().filter(x => x.borrar_en > now));
+  };
+
+  // 🔹 RENDER
+  const renderTrash = () => {
+    const container = document.getElementById('papelera_lista');
+    if (!container) return;
+
+    autoClean();
+    const trash = read();
+    container.innerHTML = '';
+
+    if (!trash.length) {
+      container.innerHTML = `<p style="opacity:.6">La papelera está vacía</p>`;
+      return;
+    }
+
+    trash.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'papelera-item';
+      div.innerHTML = `
+        <div>
+          <strong>${item.nombre || 'Sin nombre'}</strong>
+          <div style="font-size:.8rem;opacity:.7">
+            Se elimina definitivamente en 
+            ${Math.ceil((item.borrar_en - Date.now()) / DAY)} días
+          </div>
+        </div>
+        <div class="papelera-actions">
+          <button class="restore">↩ Restaurar</button>
+          <button class="delete">✖ Eliminar</button>
+        </div>
+      `;
+
+      div.querySelector('.restore').onclick = () => restoreFromTrash(item.id);
+      div.querySelector('.delete').onclick = () => {
+        Swal.fire({
+          title: 'Eliminar definitivamente',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#ef4444'
+        }).then(r => r.isConfirmed && removeFromTrash(item.id));
+      };
+
+      container.appendChild(div);
+    });
+  };
+
+  // API GLOBAL
+  window.papelera = {
+    moveToTrash,
+    renderTrash
+  };
+
+  document.addEventListener('DOMContentLoaded', renderTrash);
+})();
