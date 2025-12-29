@@ -257,32 +257,24 @@ section {
       padding: 8px;
       transition: 0.3s;
     }
-    .side_list li:nth-child(1) a:hover {
+    .side_list li:nth-child(2) a:hover {
       background-color: #54ccff9e;  
   color: #ffffff; /* texto */
 }
-.side_list li:nth-child(1) a:hover i {
+.side_list li:nth-child(2) a:hover i {
   color: #ffffff; /* icono */
 }
 
-.side_list li:nth-child(2) a:hover {
+.side_list li:nth-child(3) a:hover {
      background-color: #2ddc879e;  
      color: #ffffff;
 }
-.side_list li:nth-child(2) a:hover i {
+.side_list li:nth-child(3) a:hover i {
    color: #ffffff;
 }
 
-.side_list li:nth-child(3) a:hover {
- background-color: #f654ff9e;     
- color: #ffffff;
-}
-.side_list li:nth-child(3) a:hover i {
-  color: #ffffff;
-}
-
 .side_list li:nth-child(4) a:hover {
- background-color: #3cd579b6;     
+ background-color: #f654ff9e;     
  color: #ffffff;
 }
 .side_list li:nth-child(4) a:hover i {
@@ -290,7 +282,7 @@ section {
 }
 
 .side_list li:nth-child(5) a:hover {
- background-color: #e53aee93;     
+ background-color: #3cd579b6;     
  color: #ffffff;
 }
 .side_list li:nth-child(5) a:hover i {
@@ -298,7 +290,7 @@ section {
 }
 
 .side_list li:nth-child(6) a:hover {
- background-color: #b53aeeb6;     
+ background-color: #e53aee93;     
  color: #ffffff;
 }
 .side_list li:nth-child(6) a:hover i {
@@ -306,7 +298,7 @@ section {
 }
 
 .side_list li:nth-child(7) a:hover {
- background-color: #ee3a3ab6;     
+ background-color: #b53aeeb6;     
  color: #ffffff;
 }
 .side_list li:nth-child(7) a:hover i {
@@ -314,18 +306,10 @@ section {
 }
 
 .side_list li:nth-child(8) a:hover {
- background-color: #eedc3ab6;     
- color: #ffffff;
-}
-.side_list li:nth-child(8) a:hover i {
-  color: #ffffff;
-}
-
-.side_list li:nth-child(9) a:hover {
  background-color: #ee821cb6;     
  color: #ffffff;
 }
-.side_list li:nth-child(9) a:hover i {
+.side_list li:nth-child(8) a:hover i {
   color: #ffffff;
 }
 
@@ -364,7 +348,23 @@ section {
 }
 
 
+#btn_generar_Contrat{
+      width: 300px;
+      height: 50px;
+      border-radius: 10px;
+      border: none;
+      background-color: #5061ce;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: bold;
+    color: whitesmoke;
+    transition: .3s ease-in-out;
+   
+}
 
+#btn_generar_Contrat:hover{
+   background-color: #3c489b;
+   transform: scale(1.2);
+}
 
 .home_container{
     position: absolute;
@@ -397,6 +397,9 @@ section {
 }
 .btnP_container{
     margin-left: 80px;
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    grid-template-rows: repeat(2,1fr);
 }
 
 /* =====================

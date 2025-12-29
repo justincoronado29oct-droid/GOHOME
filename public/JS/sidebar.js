@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     add_house: 'CRUDDinmu',
     inquilinos: 'INQUILINOS',
     inmuebles: 'INMUEBLES',
+    papelera: 'papelera_section',
     papeleo: 'inquilinosCrudd',
     p_pendientes: 'pagos_pendientes',
     p_incompletos: 'pagos_incompletos',
