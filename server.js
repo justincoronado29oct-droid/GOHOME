@@ -265,6 +265,24 @@ app.delete('/inquilinos/:id', async (req, res) => {
     const rows = await query('SELECT * FROM inquilinos WHERE id = ?', [id]);
     const item = rows[0];
     if (!item) return res.status(404).json({ error: 'No encontrado' });
+    // mover pagos pendientes relacionados a la papelera
+    try {
+      const pagosPend = await query('SELECT * FROM pagos_pendientes WHERE id_inquilino = ?', [id]);
+      for (const p of pagosPend) {
+        await query('INSERT INTO papelera (tipo, objeto) VALUES (?, ?)', ['pago_pendiente', JSON.stringify(p)]);
+        await query('DELETE FROM pagos_pendientes WHERE id = ?', [p.id]);
+      }
+    } catch (e) { console.warn('No se pudieron mover pagos_pendientes asociados:', e); }
+
+    // mover pagos incompletos relacionados
+    try {
+      const pagosInc = await query('SELECT * FROM pagos_incompletos WHERE id_inquilino = ?', [id]);
+      for (const p of pagosInc) {
+        await query('INSERT INTO papelera (tipo, objeto) VALUES (?, ?)', ['pago_incompleto', JSON.stringify(p)]);
+        await query('DELETE FROM pagos_incompletos WHERE id = ?', [p.id]);
+      }
+    } catch (e) { console.warn('No se pudieron mover pagos_incompletos asociados:', e); }
+
     await query('INSERT INTO papelera (tipo, objeto) VALUES (?, ?)', ['inquilino', JSON.stringify(item)]);
     await query('DELETE FROM inquilinos WHERE id = ?', [id]);
     res.json({ deleted: true });
@@ -575,6 +593,96 @@ app.get('/papelera', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error leyendo papelera' });
+  }
+});
+
+// Restaurar elemento de la papelera
+app.post('/papelera/:id/restore', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const rows = await query('SELECT * FROM papelera WHERE id = ? LIMIT 1', [id]);
+    const entry = rows[0];
+    if (!entry) return res.status(404).json({ error: 'Elemento no encontrado en papelera' });
+
+    const tipo = entry.tipo;
+    const objeto = JSON.parse(entry.objeto || '{}');
+
+    // Restaurar según tipo
+    if (tipo === 'inquilino') {
+      // Insertar inquilino original
+      const fields = ['nombre','cedula','telefono','direccion','fecha_ospedaje','ingreso_mensual','descripcion','pago','N_casa'];
+      const vals = fields.map(f => (objeto[f] === undefined ? null : objeto[f]));
+      const q = `INSERT INTO inquilinos (${fields.join(',')}) VALUES (${fields.map(_=>'?').join(',')})`;
+      const result = await query(q, vals);
+      const newInq = (await query('SELECT * FROM inquilinos WHERE id = ?', [result.insertId]))[0];
+
+      // Buscar pagos relacionados en papelera (pendientes / incompletos) que referencien al id original
+      const allTrash = await query('SELECT * FROM papelera');
+      for (const t of allTrash) {
+        try {
+          const obj = JSON.parse(t.objeto || '{}');
+          if ((t.tipo === 'pago_pendiente' || t.tipo === 'pago_incompleto') && (String(obj.id_inquilino) === String(objeto.id) || String(obj.id) === String(objeto.id))) {
+            // reasignar id_inquilino al nuevo id
+            if (t.tipo === 'pago_pendiente') {
+              await query('INSERT INTO pagos_pendientes (id_inquilino, monto, fecha_pago) VALUES (?, ?, ?)', [newInq.id, obj.monto || 0, obj.fecha_pago || null]);
+            } else {
+              await query('INSERT INTO pagos_incompletos (id_inquilino, nombre, cedula, direccion, monto, usuario_id, metadata, raw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [newInq.id, obj.nombre || null, obj.cedula || null, obj.direccion || null, obj.monto || 0, obj.usuario_id || null, obj.metadata ? JSON.stringify(obj.metadata) : null, obj.raw || null]);
+            }
+            // borrar la entrada de papelera correspondiente
+            await query('DELETE FROM papelera WHERE id = ?', [t.id]);
+          }
+        } catch(e) { /* ignore parse errors */ }
+      }
+
+      // borrar la entrada principal de papelera (inquilino)
+      await query('DELETE FROM papelera WHERE id = ?', [id]);
+      return res.json({ restored: true, tipo: 'inquilino', item: newInq });
+    }
+
+    if (tipo === 'inmueble') {
+      const fields = ['N_casa','direccion','sector','municipio','m_contruccion','m_terreno','descripcion'];
+      const vals = fields.map(f => (objeto[f] === undefined ? null : objeto[f]));
+      const q = `INSERT INTO inmuebles (${fields.join(',')}) VALUES (${fields.map(_=>'?').join(',')})`;
+      const result = await query(q, vals);
+      const newIm = (await query('SELECT * FROM inmuebles WHERE id = ?', [result.insertId]))[0];
+      await query('DELETE FROM papelera WHERE id = ?', [id]);
+      return res.json({ restored: true, tipo: 'inmueble', item: newIm });
+    }
+
+    if (tipo === 'pago_pendiente') {
+      const obj = objeto;
+      await query('INSERT INTO pagos_pendientes (id_inquilino, monto, fecha_pago) VALUES (?, ?, ?)', [obj.id_inquilino || null, obj.monto || 0, obj.fecha_pago || null]);
+      await query('DELETE FROM papelera WHERE id = ?', [id]);
+      return res.json({ restored: true, tipo: 'pago_pendiente' });
+    }
+
+    if (tipo === 'pago_incompleto') {
+      const obj = objeto;
+      await query('INSERT INTO pagos_incompletos (id_inquilino, nombre, cedula, direccion, monto, usuario_id, metadata, raw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [obj.id_inquilino || null, obj.nombre || null, obj.cedula || null, obj.direccion || null, obj.monto || 0, obj.usuario_id || null, obj.metadata ? JSON.stringify(obj.metadata) : null, obj.raw || null]);
+      await query('DELETE FROM papelera WHERE id = ?', [id]);
+      return res.json({ restored: true, tipo: 'pago_incompleto' });
+    }
+
+    // default: si no se reconoce tipo, eliminar entrada y devolver objeto
+    await query('DELETE FROM papelera WHERE id = ?', [id]);
+    return res.json({ restored: true, tipo: tipo, item: objeto });
+  } catch (err) {
+    console.error('Error restaurando desde papelera', err);
+    return res.status(500).json({ error: 'Error restaurando elemento' });
+  }
+});
+
+// Eliminar definitivamente de la papelera
+app.delete('/papelera/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const rows = await query('SELECT * FROM papelera WHERE id = ? LIMIT 1', [id]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: 'No encontrado' });
+    await query('DELETE FROM papelera WHERE id = ?', [id]);
+    return res.json({ deleted: true });
+  } catch (err) {
+    console.error('Error eliminando definitivamente de papelera', err);
+    return res.status(500).json({ error: 'Error eliminando elemento' });
   }
 });
 

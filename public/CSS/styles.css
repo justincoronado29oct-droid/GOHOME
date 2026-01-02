@@ -797,7 +797,10 @@ section {
     margin-left: 500px;
     margin-top: -300px;
     transition: .2s ease-in-out;
-     color: var(--color_crudd);
+    color: var(--color_crudd);
+    resize: none; 
+    padding-left: 30px;
+    margin-top: -200px;
       resize: none; 
       padding-left: 30px;
       margin-top: -200px;
@@ -833,6 +836,71 @@ section {
     transform: scale(1.05);
 }
  
+/* =====================
+   Reglas responsivas para laptops y desktops
+   Ajustes generales: anchos fluidos y corrección de márgenes
+   ===================== */
+
+/* Layout fluido de botones y contenedores */
+.btn_container, .btnP_container {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin-left: 0;
+}
+
+/* Escritorios grandes (1366px+) */
+@media (min-width: 1366px) {
+  .sidebar { width: 80px; }
+  .sidebar.open { width: 240px; }
+  .home, .inquilinosCRUDD { margin-left: 80px; }
+  .sidebar.open ~ .home, .sidebar.open ~ .inquilinosCRUDD, .sidebar.open ~ .inquilinosInfo, .sidebar.open ~ .p_pendientes, .sidebar.open ~ .p_incompleto, .sidebar.open ~ .cruddinmuebles, .sidebar.open ~ .papelera_section, .sidebar.open ~ .inmueblesInfo, .sidebar.open ~ .papeleo_section { margin-left: 240px; }
+  .home_container { margin-left: 360px; width: 1000px; padding: 60px; }
+  .home_container h1 { font-size: 72px; }
+  .circle_home { width: 360px; height: 360px; }
+}
+
+/* Laptops y pantallas medianas (1024px - 1365px) */
+@media (min-width: 1024px) and (max-width: 1365px) {
+  .sidebar { width: 70px; }
+  .sidebar.open { width: 220px; }
+  .home, .inquilinosCRUDD { margin-left: 70px; }
+  .sidebar.open ~ .home, .sidebar.open ~ .inquilinosCRUDD, .sidebar.open ~ .inquilinosInfo, .sidebar.open ~ .p_pendientes, .sidebar.open ~ .p_incompleto, .sidebar.open ~ .cruddinmuebles, .sidebar.open ~ .papelera_section, .sidebar.open ~ .inmueblesInfo, .sidebar.open ~ .papeleo_section { margin-left: 220px; }
+  .home_container { margin-left: 300px; width: calc(100% - 360px); padding: 40px; }
+  .home_container h1 { font-size: 56px; }
+  .circle_home { width: 300px; height: 300px; }
+  .btn_container, .btnP_container { grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); }
+  /* Formularios y botones ocupen ancho disponible */
+  #btn_crudd_inquilinos, #btn_crudd_inmuebles, #btn_crudd_papeleo, #btn_crudd_pagos_incompletos, #btn_pagos_pendientes { width: 100%; max-width: 360px; margin-left: 0; font-size: 18px; }
+  .input_crudd_inquilinos, #descripcion { margin-left: 0; width: 100%; max-width: 720px; position: static; }
+  .iconCruddinquilinos, .cruddicon { margin-left: 0; transform: none; }
+  .form_inquilinos { position: static; margin-top: 20px; box-shadow: none; }
+  .side_list { margin-top: 0; }
+}
+
+/* Laptops pequeños y pantallas estrechas (<=1023px) */
+@media (max-width: 1023px) {
+  .sidebar { width: 70px; }
+  .sidebar.open { width: 200px; }
+  .home, .inquilinosCRUDD { margin-left: 70px; }
+  .home_container { margin-left: 90px; width: calc(100% - 140px); padding: 28px; margin-top: 120px; }
+  .home_container h1 { font-size: 44px; }
+  .circle_home { width: 220px; height: 220px; }
+  .btn_container, .btnP_container { grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); grid-gap: 8px; }
+  #btn_crudd_inquilinos, #btn_crudd_inmuebles, #btn_crudd_papeleo, #btn_crudd_pagos_incompletos, #btn_pagos_pendientes { width: 100%; max-width: none; margin-left: 0; font-size: 16px; }
+  .input_crudd_inquilinos, #descripcion { margin-left: 0; width: 100%; max-width: 640px; }
+  .a { display: none; }
+}
+
+/* Correcciones puntuales de márgenes negativos */
+@media (max-width: 1365px) {
+  .side_list { margin-top: 0; }
+  .iconCruddinquilinos { margin-left: 0; }
+  .input_crudd_inquilinos { margin-left: 0; }
+  #btn_crudd_inquilinos { margin-left: 0; }
+  #btn_crudd_inmuebles { margin-left: 0; }
+  #descripcion { margin-left: 0; margin-top: 0; }
+}
+
+/* Fin reglas responsivas */
 
 /* iconos de los inputs */
 .bx-man{

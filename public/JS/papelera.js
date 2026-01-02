@@ -94,7 +94,39 @@ function restoreItem(id) {
   let trash = readTrash();
   const item = trash.find(x => String(x.id) === String(id));
   if (!item) return;
+  // Si hay API disponible, intentar restaurar en servidor
+  if (typeof window.apiFetch === 'function') {
+    window.apiFetch(`papelera/${encodeURIComponent(id)}/restore`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+      .then(async r => {
+        if (!r.ok) throw new Error('server restore failed');
+        const body = await r.json().catch(()=>null) || {};
+        // quitar de papelera local
+        const newTrash = readTrash().filter(x => String(x.id) !== String(id));
+        writeTrash(newTrash);
+        renderTrash();
 
+        // si el servidor devolvió el item restaurado, reinyectar en UI local
+        const restored = body.item || item;
+        if (typeof readBoxesStorage === 'function' && typeof writeBoxesStorage === 'function') {
+          const arr = readBoxesStorage(); arr.unshift(restored); writeBoxesStorage(arr);
+        }
+        if (typeof createBox === 'function') createBox(restored);
+
+        Swal.fire({ icon: 'success', title: 'Restaurado', text: 'El elemento fue restaurado desde la papelera del servidor', confirmButtonColor: '#10b981' });
+      })
+      .catch(() => {
+        // fallback local
+        trash = trash.filter(x => String(x.id) !== String(id));
+        writeTrash(trash);
+        if (typeof readBoxesStorage === 'function' && typeof writeBoxesStorage === 'function') { const items = readBoxesStorage(); items.push(item); writeBoxesStorage(items); }
+        if (typeof createBox === 'function') createBox(item);
+        renderTrash();
+        Swal.fire({ icon: 'success', title: 'Restaurado', text: 'Elemento restaurado localmente', confirmButtonColor: '#10b981' });
+      });
+    return;
+  }
+
+  // sin servidor: restauración local
   // quitar de papelera
   trash = trash.filter(x => String(x.id) !== String(id));
   writeTrash(trash);
@@ -109,16 +141,11 @@ function restoreItem(id) {
   // volver a render principal
   if (typeof createBox === 'function') {
     createBox(item);
-  }
+  };
 
   renderTrash();
 
-  Swal.fire({
-    icon: 'success',
-    title: 'Restaurado',
-    text: 'El elemento volvió a la lista principal',
-    confirmButtonColor: '#10b981'
-  });
+  Swal.fire({ icon: 'success', title: 'Restaurado', text: 'El elemento volvió a la lista principal', confirmButtonColor: '#10b981' });
 }
 
 /* =========================
@@ -136,6 +163,25 @@ function deleteForever(id) {
     cancelButtonText: 'Cancelar'
   }).then(result => {
     if (!result.isConfirmed) return;
+    // si hay API, solicitar eliminación definitiva en servidor
+    if (typeof window.apiFetch === 'function') {
+      window.apiFetch(`papelera/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
+        .then(async r => {
+          if (!r.ok) throw new Error('server delete failed');
+          // limpiar local
+          const trash = readTrash().filter(x => String(x.id) !== String(id));
+          writeTrash(trash);
+          renderTrash();
+          Swal.fire({ icon: 'success', title: 'Eliminado', text: 'Elemento eliminado definitivamente', confirmButtonColor: '#ef4444' });
+        })
+        .catch(() => {
+          const trash = readTrash().filter(x => String(x.id) !== String(id));
+          writeTrash(trash);
+          renderTrash();
+          Swal.fire({ icon: 'success', title: 'Eliminado', text: 'Elemento eliminado localmente', confirmButtonColor: '#ef4444' });
+        });
+      return;
+    }
 
     const trash = readTrash().filter(x => String(x.id) !== String(id));
     writeTrash(trash);
