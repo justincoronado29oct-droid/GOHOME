@@ -27,7 +27,7 @@ async function main(){
   const pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASS || 'JaDc200817@))*',
+    password: process.env.DB_PASS || 'F9!qZ7@M#2sLxW8$',
     database: process.env.DB_NAME || 'gohome_db_new',
     port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
     waitForConnections: true,
