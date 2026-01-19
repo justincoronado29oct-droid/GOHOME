@@ -89,6 +89,24 @@ async function query(sql, params = []) {
   return rows;
 }
 
+/**
+ * Wrapper para queries con manejo de errores
+ * Retorna { success: boolean, data: ?, error?: string }
+ */
+async function safeQuery(sql, params = []) {
+  try {
+    const [rows] = await pool.execute(sql, params);
+    return { success: true, data: rows };
+  } catch (err) {
+    console.error('DB Error:', err.message);
+    return { 
+      success: false, 
+      error: err.message,
+      code: err.code 
+    };
+  }
+}
+
 function safeInt(v, fallback = null) {
   const n = parseInt(v, 10);
   return Number.isNaN(n) ? fallback : n;
