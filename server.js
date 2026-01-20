@@ -7,7 +7,6 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const path = require("path");
 
-mysql://root:dygyimgYzGMSTOormbYOcJvzLuiiQfUE@switchyard.proxy.rlwy.net:10788/railway
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));// Servir archivos estáticos (CSS, JS, HTML)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -76,10 +75,11 @@ const pool = mysql.createPool({
 (async () => {
   try {
     const conn = await pool.getConnection();
-    console.log("✅ Conectado a MySQL Railway");
+    console.log(`✅ Conectado a MySQL en ${process.env.DB_HOST}:${process.env.DB_PORT}`);
     conn.release();
   } catch (err) {
-    console.error("❌ Error MySQL:", err.code, err.message);
+    console.error(`❌ Error conectando a la base de datos: ${err.message}`);
+    console.error(`   Verificar: MySQL activo en ${process.env.DB_HOST}:${process.env.DB_PORT}`);
   }
 })();
 
