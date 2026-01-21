@@ -68,8 +68,10 @@
                 <div class="btnP_container">
                 <button id="btn_crudd_inquilinos"><i class='bx  bxs-user'></i>    Ingresar Inquilinos</button>
                 <button id="btn_crudd_inmuebles"><i class='bx  bxs-home'></i>   Ingresar Inmuebles</button>
-                    <button id="btn_crudd_papeleo"><i class='bx  bxs-folder'></i>  Papeleo</button>
-                <button id="btn_generar_Contrat">Generar contrato</button>
+                <button id="btn_ver_inquilinos"><i class='bx bxs-user-check'></i>  Ver Inquilinos</button>
+                <button id="btn_ver_inmuebles"><i class='bx bxs-building'></i>  Ver Inmuebles</button>
+                <button id="btn_crudd_papeleo"><i class='bx  bxs-folder'></i>  Papeleo</button>
+                <button id="btn_generar_Contrat"><i class='bx bxs-file'></i>  Generar contrato</button>
             </div>
                 
             </div>
@@ -314,19 +316,6 @@
 <script src="/public/JS/login_registrer.js"></script>
 <script src="/public/JS/pwa.js"></script>
 
-<!-- Redirección al login si no autenticado -->
-<script>
-(function(){
-  try{
-    const path = window.location.pathname.toLowerCase();
-    const isLoginPage = path.includes('login_registrer.html') || path.includes('/login_registrer');
-    const currentUser = localStorage.getItem('currentUser');
-    if (!currentUser && !isLoginPage) {
-      window.location.href = '/HTML/LOGIN_REGISTRER.HTML';
-    }
-  } catch(e) { console.warn('auth redirect error', e); }
-})();
-</script>
 
 <!-- Profile popup (dinámico) -->
 <div id="profilePopup" class="profile-popup" aria-hidden="true"></div>

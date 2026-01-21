@@ -84,6 +84,8 @@
     const internalNavButtons = [
       { id: 'btn_crudd_inquilinos', target: 'inquilinosCrudd' },
       { id: 'btn_crudd_inmuebles', target: 'CRUDDinmu' },
+      { id: 'btn_ver_inquilinos', target: 'inquilinosCrudd' },
+      { id: 'btn_ver_inmuebles', target: 'INMUEBLES' },
       { id: 'btn_crudd_papeleo', target: 'papeleo_section' },
       { id: 'btn_crudd_pagos_incompletos', target: 'pagos_incompletos' },
       { id: 'btn_pagos_pendientes', target: 'pagos_pendientes' },

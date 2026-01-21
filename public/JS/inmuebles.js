@@ -170,9 +170,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function moverAPapeleraLocal(inmueble) {
-    const papelera = JSON.parse(localStorage.getItem('papelera')) || [];
-    papelera.push({ ...inmueble, eliminado_en: new Date().toISOString() });
-    localStorage.setItem('papelera', JSON.stringify(papelera));
+    // Asegurar que el inmueble tenga un ID
+    const itemToDelete = { ...inmueble };
+    if (!itemToDelete.id) {
+      itemToDelete.id = `inmu_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+    
+    // Usar la función global moveToTrash de papelera.js
+    if (typeof window.papelera !== 'undefined' && typeof window.papelera.moveToTrash === 'function') {
+      window.papelera.moveToTrash(itemToDelete);
+    } else {
+      // Fallback si papelera.js no está disponible
+      const trash = JSON.parse(localStorage.getItem('papelera_items') || '[]');
+      trash.push({
+        ...itemToDelete,
+        deletedAt: Date.now(),
+        type: 'inmueble'
+      });
+      localStorage.setItem('papelera_items', JSON.stringify(trash));
+    }
   }
 
   // ================== Visual: crear caja ==================
@@ -463,4 +479,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // 🔹 INICIAR
   // ======================================================
   cargarInmuebles();
+  
+  // ======================================================
+  // 🔹 EXPONER GLOBALMENTE (para papelera)
+  // ======================================================
+  window.cargarInmuebles = cargarInmuebles;
+  
+  // Función para renderizar un solo inmueble (para papelera - restauración)
+  window.renderSingleInmueble = function(inmueble) {
+    const item = { ...inmueble };
+    crearCajaInmueble(item);
+  };
 });

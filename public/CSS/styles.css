@@ -349,57 +349,75 @@ section {
 
 
 #btn_generar_Contrat{
-      width: 300px;
-      height: 50px;
-      border-radius: 10px;
-      border: none;
-      background-color: #5061ce;
+    width: 100%;
+    max-width: 250px;
+    height: 70px;
+    border-radius: 12px;
+    border: none;
+    background-color: #5061ce;
     font-family: 'Open Sans', sans-serif;
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 16px;
     color: whitesmoke;
-    transition: .3s ease-in-out;
-   
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(80, 97, 206, 0.2);
+    cursor: pointer;
 }
 
 #btn_generar_Contrat:hover{
-   background-color: #3c489b;
-   transform: scale(1.2);
+    background-color: #3c489b;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(80, 97, 206, 0.35);
 }
 
 .home_container{
-    position: absolute;
+    position: relative;
     z-index: 2;
     display: flex;
     flex-direction: column;
+    align-items: center;
     text-align: center;
-    margin-left: 340px;
-    margin-top: 90px;
-    padding: 50px;
-    width: 900px;
-    height: 300px;
+    margin: 60px auto;
+    padding: 50px 40px;
+    max-width: 700px;
     background-color: var(--bg_box);
     border-radius: 20px;
-    padding-top: 120px;
-    padding-left: 90px;
-    margin-top: 200px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
 }
 
 .home_container h1{
     color: var(--colorP);
-    margin-top: -90px;
-    font-size: 60px;
+    font-size: 48px;
+    margin: 0 0 15px 0;
+    font-weight: 700;
 }
+
 .home_container h4{
     color: var(--color_subt);
-    margin-bottom: 20px;
-    margin-top: -10px;
-    font-size: 20px;
+    margin: 0 0 30px 0;
+    font-size: 18px;
+    font-weight: 500;
 }
+.seleccion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
 .btnP_container{
-    margin-left: 80px;
     display: grid;
-    grid-template-columns: repeat(2,1fr);
-    grid-template-rows: repeat(2,1fr);
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+    gap: 20px;
+    max-width: 600px;
+    margin: 30px auto 0;
+    padding: 0 20px;
+    width: 100%;
 }
 
 /* =====================
@@ -557,109 +575,201 @@ section {
 
 
 
+/* estilos generales para los botones del home */
+.btnP_container button .bx {
+    font-size: 28px;
+}
+
 /* boton para crudd de inquilinos */
 #btn_crudd_inquilinos{
-    width: 280px;
-    height: 60px;
-    margin-bottom: 10px;
-    font-size: 25px;
-    font-weight: bold;
-    margin-left: -100px;
+    width: 100%;
+    height: 70px;
+    font-size: 18px;
+    font-weight: 600;
     border: none;
-    border-radius: 10px;
-    margin-right: 10px;
+    border-radius: 12px;
     background-color: var(--bg_btn_inquilinos);
     color: var(--color_btn_inquilinos);
     transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(30, 224, 130, 0.2);
+    cursor: pointer;
 }
 
 #btn_crudd_inquilinos:hover{
     background-color: var(--bg_btn_inquilinos_hover);
     color: var(--color_btn_inquilinos_hover);
-    cursor: pointer;
-    transform: scale(1.05);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(30, 224, 130, 0.35);
 }
 
 /* boton para crudd de inmuebles */
 #btn_crudd_inmuebles{
-    width: 280px;
-    height: 60px;
-    margin-bottom: 10px;
-    font-size: 25px;
-    font-weight: bold;
-    margin-left: 50px;
+    width: 100%;
+    height: 70px;
+    font-size: 18px;
+    font-weight: 600;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     background-color: var(--bg_btn_cruddHO);
-    color: var( --color_btn_cruddHO);
+    color: var(--color_btn_cruddHO);
     transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(240, 136, 226, 0.2);
+    cursor: pointer;
 }
+
 #btn_crudd_inmuebles:hover{
     background-color: var(--bg_btn_cruddHO_hover);
     color: var(--color_btn_cruddHO_hover);
-    cursor: pointer;
-    transform: scale(1.05);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(240, 136, 226, 0.35);
 }
+
+/* boton para ver inquilinos */
+#btn_ver_inquilinos{
+    width: 100%;
+    height: 70px;
+    font-size: 18px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    background-color: var(--bg_btn_cruddINQ);
+    color: var(--color_btn_cruddINQ);
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(92, 184, 210, 0.2);
+    cursor: pointer;
+}
+
+#btn_ver_inquilinos:hover{
+    background-color: var(--bg_btn_cruddINQ_hover);
+    color: var(--color_btn_cruddINQ_hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(92, 184, 210, 0.35);
+}
+
+/* boton para ver inmuebles */
+#btn_ver_inmuebles{
+    width: 100%;
+    height: 70px;
+    font-size: 18px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    background-color: var(--bg_btn_inmuebles);
+    color: var(--color_btn_inmuebles);
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(255, 102, 196, 0.2);
+    cursor: pointer;
+}
+
+#btn_ver_inmuebles:hover{
+    background-color: var(--bg_btn_inmuebles_hover);
+    color: var(--color_btn_inmuebles_hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 102, 196, 0.35);
+}
+
 /* contenedor de los botones de la parte inferior */
 .btn_container{
     display: grid;
-    grid-template-columns: repeat(4,1fr);
-    grid-gap: 10px;
-    margin-left: -50px;
+    grid-template-columns: repeat(2,1fr);
+    grid-gap: 20px;
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 0 20px;
 }
 
 #btn_crudd_papeleo{
-    width: 200px;
-    height: 60px;
-    font-size: 20px;
-    font-weight: bold;
+    width: 100%;
+    height: 70px;
+    font-size: 18px;
+    font-weight: 600;
     color: var(--color_btn_papeleo);
     background-color: var(--bg_btn_papeleo);
     border: none;
-    border-radius: 10px;    
+    border-radius: 12px;    
     transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(215, 106, 246, 0.2);
+    cursor: pointer;
 }
+
 #btn_crudd_papeleo:hover{
     background-color: var(--bg_btn_papeleo_hover);
     color: var(--color_btn_papeleo_hover);
     cursor: pointer;
-    transform: scale(1.05);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(215, 106, 246, 0.35);
 }
 
 #btn_crudd_pagos_incompletos{
-    width: 200px;
-    height: 60px;
-    font-size: 17px;
-    font-weight: bold;
+    width: 100%;
+    height: 70px;
+    font-size: 18px;
+    font-weight: 600;
     color: var(--color_btn_pagoIncompletos);
     background-color: var(--bg_btn_pagoIncompletos);
     border: none;
-    border-radius: 10px;    
+    border-radius: 12px;    
     transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(218, 176, 9, 0.2);
+    cursor: pointer;
 }
+
 #btn_crudd_pagos_incompletos:hover{
     background-color: var(--bg_btn_pagoIncompletos_hover);
     color: var(--color_btn_pagoIncompletos_hover);
     cursor: pointer;
-    transform: scale(1.05);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(218, 176, 9, 0.35);
 }
 
 #btn_pagos_pendientes{
-    width: 200px;
-    height: 60px;
-    font-size: 17px;
-    font-weight: bold;
+    width: 100%;
+    height: 70px;
+    font-size: 18px;
+    font-weight: 600;
     color: var(--color_btn_pagosPendientes);
     background-color: var(--bg_btn_pagosPendientes);
     border: none;
-    border-radius: 10px;    
+    border-radius: 12px;    
     transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(255, 173, 173, 0.2);
+    cursor: pointer;
 }
+
 #btn_pagos_pendientes:hover{
     background-color: var(--bg_btn_pagosPendientes_hover);
     color: var(--color_btn_pagosPendientes_hover);
     cursor: pointer;
-    transform: scale(1.05);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 173, 173, 0.35);
 }
 .bxs-x{
     font-size: 19px;
@@ -1446,96 +1556,119 @@ section {
 }
 
 .papelera_card {
-  display: flex;
-  gap: 14px;
-  align-items: stretch;
   background: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
   border-radius: 12px;
-  padding: 14px;
+  padding: 18px;
   box-shadow: 0 8px 24px rgba(18, 38, 63, 0.06);
   border: 1px solid rgba(15, 23, 42, 0.05);
   transition: transform .12s ease, box-shadow .12s ease;
   overflow: hidden;
   position: relative;
-  min-height: 96px;
-}
-.papelera_card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(18,38,63,0.09); }
-
-/* Icono */
-.papelera_card .thumb {
-  flex: 0 0 84px;
-  height: 84px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(255,105,97,0.08), rgba(255,205,210,0.02));
-  display: grid;
-  place-items: center;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
-}
-.papelera_card .thumb img {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  opacity: 0.98;
 }
 
-/* Contenido */
-.papelera_card .body {
-  flex: 1;
+.papelera_card:hover { 
+  transform: translateY(-4px); 
+  box-shadow: 0 18px 40px rgba(18,38,63,0.09); 
+}
+
+.papelera_card_header {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
-.papelera_card .title {
-  font-size: 1.06rem;
+
+.papelera_card_header h3 {
+  font-size: 1.2rem;
   color: #1f2937;
   font-weight: 700;
-  margin: 0 0 6px;
-}
-.papelera_card .meta {
-  font-size: 0.92rem;
-  color: #556078;
   margin: 0;
-  line-height: 1.25;
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-.papelera_card .meta small {
-  color: #8892a8;
-  font-weight:600;
+  flex: 1;
 }
 
-/* Actions column */
-.papelera_card .actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
-  justify-content: center;
-  min-width: 110px;
+.papelera_type {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: #f0f9ff;
+  color: #0369a1;
 }
-.papelera_card .actions .btn {
-  padding: 8px 12px;
+
+.papelera_card p {
+  margin: 8px 0;
+  color: #556078;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.papelera_card p strong {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.papelera_actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.btn_restore,
+.btn_delete {
+  padding: 10px 16px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
   font-weight: 600;
   font-size: 0.9rem;
-  min-width: 100%;
-  box-shadow: 0 6px 18px rgba(12,20,60,0.04);
-  transition: transform .08s, opacity .08s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all .2s ease;
 }
-.papelera_card .actions .btn:active { transform: translateY(1px); }
 
-/* Restore / Delete styles */
-.btn-restore {
-  background: linear-gradient(180deg,#10b981,#059669);
+.btn_restore {
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
   color: white;
 }
-.btn-delete {
-  background: linear-gradient(180deg,#ff6b6b,#ef4444);
+
+.btn_restore:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3);
+}
+
+.btn_delete {
+  background: linear-gradient(180deg, #ff6b6b 0%, #ef4444 100%);
   color: white;
 }
+
+.btn_delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.3);
+}
+
+.papelera_empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #8892a8;
+}
+
+.papelera_empty p {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+/* Contenedor de lista de papelera */
+.papelera_lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 18px;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
 
 /* Small note / badge */
 .papelera_card .badge {

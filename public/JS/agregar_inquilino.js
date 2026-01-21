@@ -1302,7 +1302,13 @@ function formatMsToDHMS(ms) {
     remove: removeBox,
     openPayment: openPaymentModal,
     processDeleteQueue, // expose for manual trigger if needed
-    diagnosticar: diagnosticarCajas
+    diagnosticar: diagnosticarCajas,
+    createBox, // Exponer para papelera
+    readBoxesStorage, // Exponer para papelera
+    writeBoxesStorage // Exponer para papelera
   };
+
+  // Alias para compatibilidad con papelera.js
+  window.boxesManager = window.inquilinosBoxesSwal;
 
 })();
