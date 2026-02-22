@@ -2,7 +2,7 @@
   const STORAGE_KEY = 'inquilinos_boxes_v1';
   const CHECK_INTERVAL = 1000;
 
-  const INTERES_DIARIO = 0.05; // 5% diario
+  const INTERES_DIARIO = 0; // Intereses deshabilitados
   const DIA_MS = 24 * 60 * 60 * 1000;
 
   /* ================= helpers ================= */
@@ -44,18 +44,42 @@
 
   function calcularIntereses(base, overdueMs) {
     const dias = Math.floor(overdueMs / DIA_MS);
-    const interes = base * INTERES_DIARIO * dias;
-    return { dias, interes, total: base + interes };
+    const MES_MS = 30 * DIA_MS; // 30 días = 1 mes
+    const mesesVencidos = Math.floor(overdueMs / MES_MS);
+    
+    // Deuda base multiplicada por cantidad de meses vencidos
+    const deudaPorMeses = base * Math.max(1, mesesVencidos);
+    
+    return { 
+      dias, 
+      mesesVencidos,
+      deudaPorMeses,
+      interes: 0,
+      total: deudaPorMeses
+    };
   }
 
-  // Calcula información para pagos incompletos: lo que pagó, lo que falta, intereses y total general
+  // Calcula información para pagos incompletos: lo que pagó, lo que falta, y total general
   function calcularIncompleto(base, pagado, overdueMs) {
     const dias = Math.floor(overdueMs / DIA_MS);
+    const MES_MS = 30 * DIA_MS; // 30 días = 1 mes
+    const mesesVencidos = Math.floor(overdueMs / MES_MS);
+    
+    // Deuda base multiplicada por cantidad de meses vencidos
+    const deudaPorMeses = base * Math.max(1, mesesVencidos);
+    
     const pag = Number(pagado || 0);
-    const falta = Math.max(0, Number(base) - pag);
-    const interes = falta * INTERES_DIARIO * dias; // interés simple acumulado por días completos
-    const total = falta + interes; // total general: lo que falta + intereses
-    return { dias, pagado: pag, falta, interes, total };
+    const falta = Math.max(0, deudaPorMeses - pag);
+    
+    return { 
+      dias, 
+      mesesVencidos,
+      deudaPorMeses,
+      pagado: pag, 
+      falta,
+      interes: 0,
+      total: falta
+    };
   }
 
   /* ================= UI helpers ================= */
@@ -109,14 +133,11 @@
 
     panel.innerHTML = `
       <div style="font-weight:800; color:#991b1b; margin-bottom:6px;">
-        ⛔ ESTATUS: PENDIENTE
+        ⛔ ESTATUS: PENDIENTE (${calc.mesesVencidos} mes${calc.mesesVencidos !== 1 ? 'es' : ''})
       </div>
-      <div>💰 Deuda base: <strong>$${money(calc.base)}</strong></div>
-      <div>📈 Intereses (${calc.dias} días):
-        <strong style="color:#b91c1c;">$${money(calc.interes)}</strong>
-      </div>
+      <div>💰 Deuda por meses: <strong>$${money(calc.deudaPorMeses)}</strong> (${calc.mesesVencidos} × ${money(calc.deudaPorMeses / Math.max(1, calc.mesesVencidos))})</div>
       <div style="margin-top:6px; font-weight:900; color:#7f1d1d;">
-        TOTAL GENERAL: $${money(calc.total)}
+        TOTAL A PAGAR: $${money(calc.total)}
       </div>
     `;
   }
@@ -149,15 +170,13 @@
 
     panel.innerHTML = `
       <div style="font-weight:800; color:#92400e; margin-bottom:6px;">
-        ⚠️ ESTATUS: INCOMPLETO
+        ⚠️ ESTATUS: INCOMPLETO (${info.mesesVencidos} mes${info.mesesVencidos !== 1 ? 'es' : ''})
       </div>
+      <div>💰 Deuda por meses: <strong>$${money(info.deudaPorMeses)}</strong> (${info.mesesVencidos} × ${money(info.deudaPorMeses / Math.max(1, info.mesesVencidos))})</div>
       <div>💰 Pagado: <strong>$${money(info.pagado)}</strong></div>
-      <div>💰 Falta por pagar: <strong>$${money(info.falta)}</strong></div>
-      <div>📈 Intereses (${info.dias} días):
-        <strong style="color:#b45309;">$${money(info.interes)}</strong>
-      </div>
+      <div>💰 Falta por pagar: <strong style="color:#b45309;">$${money(info.falta)}</strong></div>
       <div style="margin-top:6px; font-weight:900; color:#78350f;">
-        TOTAL GENERAL: $${money(info.total)}</div>
+        TOTAL A PAGAR: $${money(info.total)}</div>
     `;
   }
 
@@ -201,14 +220,11 @@
 
       block.innerHTML = `
         <div style="font-weight:900; color:#991b1b; margin-bottom:6px;">
-          ⛔ PAGO PENDIENTE
+          ⛔ PAGO PENDIENTE (${p.mesesVencidos} mes${p.mesesVencidos !== 1 ? 'es' : ''})
         </div>
-        <div>💰 Deuda base: <strong>$${money(p.base)}</strong></div>
-        <div>📈 Intereses (${p.dias} días):
-          <strong style="color:#b91c1c;">$${money(p.interes)}</strong>
-        </div>
+        <div>💰 Deuda por meses: <strong>$${money(p.deudaPorMeses)}</strong> (${p.mesesVencidos} × ${money(p.deudaPorMeses / Math.max(1, p.mesesVencidos))})</div>
         <div style="margin-top:6px; font-weight:900; color:#7f1d1d;">
-          TOTAL GENERAL: $${money(p.total)}
+          TOTAL A PAGAR: $${money(p.total)}
         </div>
       `;
 
@@ -231,15 +247,13 @@
 
       block.innerHTML = `
         <div style="font-weight:900; color:#92400e; margin-bottom:6px;">
-          ⚠️ INCOMPLETO
+          ⚠️ INCOMPLETO (${i.mesesVencidos} mes${i.mesesVencidos !== 1 ? 'es' : ''})
         </div>
+        <div>💰 Deuda por meses: <strong>$${money(i.deudaPorMeses)}</strong> (${i.mesesVencidos} × ${money(i.deudaPorMeses / Math.max(1, i.mesesVencidos))})</div>
         <div>💰 Pagado: <strong>$${money(i.pagado)}</strong></div>
-        <div>💰 Falta por pagar: <strong>$${money(i.falta)}</strong></div>
-        <div>📈 Intereses (${i.dias} días):
-          <strong style="color:#b45309;">$${money(i.interes)}</strong>
-        </div>
+        <div>💰 Falta por pagar: <strong style="color:#b45309;">$${money(i.falta)}</strong></div>
         <div style="margin-top:6px; font-weight:900; color:#78350f;">
-          TOTAL GENERAL: $${money(i.total)}
+          TOTAL A PAGAR: $${money(i.total)}
         </div>
       `;
 
@@ -310,12 +324,7 @@
         // Pendiente normal (sin pago parcial)
         const calc = calcularIntereses(base, overdueMs);
         item.status = 'PENDIENTE';
-        item.pendienteInfo = {
-          base,
-          dias: calc.dias,
-          interes: calc.interes,
-          total: calc.total
-        };
+        item.pendienteInfo = calc;
         aplicarPendienteUI(boxEl, item.pendienteInfo, overdueMs);
       }
 

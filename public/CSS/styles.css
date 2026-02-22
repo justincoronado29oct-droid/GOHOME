@@ -1734,6 +1734,7 @@ section {
   padding: 15px 20px;
   transition: transform 0.2s, box-shadow 0.2s;
   position: relative;
+  z-index: 10;
 }
 
 .papelera_card:hover {
