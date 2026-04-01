@@ -85,6 +85,32 @@
   function sanitizeIdPhone(value) {
     return String(value || '').replace(/[^0-9-]/g, '');
   }
+
+  function formatCedula(value) {
+    const digits = String(value || '').replace(/[^0-9]/g, '');
+    const parts = [];
+    if (digits.length > 0) parts.push(digits.slice(0, 3));
+    if (digits.length > 3) parts.push(digits.slice(3, 10));
+    if (digits.length > 10) parts.push(digits.slice(10, 11));
+    return parts.filter(Boolean).join('-');
+  }
+
+  function formatTelefono(value) {
+    const digits = String(value || '').replace(/[^0-9]/g, '');
+    const area = digits.slice(0, 3);
+    const mid = digits.slice(3, 6);
+    const last = digits.slice(6, 10);
+    if (digits.length <= 3) return area;
+    if (digits.length <= 6) return `${area}-${mid}`;
+    return `${area}-${mid}-${last}`;
+  }
+
+  function capitalizeName(value) {
+    return String(value || '').trim().split(/\s+/).map(word => {
+      return word ? word[0].toUpperCase() + word.slice(1).toLowerCase() : '';
+    }).join(' ');
+  }
+
   // Normaliza valor para atribuir a <input type="date"> (formato YYYY-MM-DD)
   function formatDateForInput(value) {
     if (!value && value !== 0) return '';
@@ -109,6 +135,19 @@
       el.addEventListener('input', fn);
       el.dataset._sanitizeBound = '1';
       try { el.setAttribute('inputmode', 'numeric'); el.setAttribute('pattern', '[0-9-]*'); } catch(e){}
+    }
+  }
+
+  function bindCedulaTelefonoInput(el, type) {
+    if (!el) return;
+    const fn = (e) => {
+      const raw = e.target.value;
+      if (type === 'cedula') e.target.value = formatCedula(raw);
+      else if (type === 'telefono') e.target.value = formatTelefono(raw);
+    };
+    if (!el.dataset._maskBound) {
+      el.addEventListener('input', fn);
+      el.dataset._maskBound = '1';
     }
   }
 
@@ -363,6 +402,8 @@
     const telMain = document.getElementById('telefono_inquilino');
     bindSanitizeInput(cedMain);
     bindSanitizeInput(telMain);
+    bindCedulaTelefonoInput(cedMain, 'cedula');
+    bindCedulaTelefonoInput(telMain, 'telefono');
   })();
 
   // ---------------- crear / render caja (más ancha y con timer separado) ----------------
@@ -380,6 +421,7 @@
     box.dataset.telefono = (item.telefono || '').toString();
     box.dataset.descripcion = (item.descripcion || '').toString();
     box.dataset.ingreso_mensual = item.ingreso_mensual != null ? String(item.ingreso_mensual) : '';
+    box.dataset.fecha_pago = item.fecha_pago != null ? String(item.fecha_pago) : '';
 
     Object.assign(box.style, {
       position: 'relative',
@@ -407,7 +449,8 @@
           <div class="name" style="font-weight:800; font-size:1.25rem; color:#0f172a; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.nombre)}</div>
           <div class="meta" style="font-size:0.85rem; color:#6b7280; margin-top:6px;">
             <span style="display:inline-block; vertical-align:middle; margin-right:6px;">🏠</span> ${escapeHtml(item.N_casa || 'N/A')}
-            <span style="display:inline-block; vertical-align:middle; margin-left:12px; margin-right:4px;">📅</span> ${new Date(item.fecha_registro).toLocaleDateString()}
+            <span style="display:inline-block; vertical-align:middle; margin-left:12px; margin-right:4px;">�</span> Fecha de pago: ${item.fecha_pago != null ? String(item.fecha_pago) : 'N/A'}
+            <span style="display:inline-block; vertical-align:middle; margin-left:12px; margin-right:4px;">🗓️</span> ${new Date(item.fecha_registro).toLocaleDateString()}
           </div>
         </div>
 
@@ -888,6 +931,12 @@ function formatMsToDHMS(ms) {
         </div>
 
         <div class="swal-field">
+          <label>Día de Pago</label>
+          <input id="swal_in_fecha_pago" type="number" min="1" max="31" class="swal-custom-input" value="${item.fecha_pago != null ? item.fecha_pago : ''}" placeholder="1-31">
+          <small style="color: #ef4444; margin-top: 4px; display: none;" id="error_fecha_pago">La fecha de pago debe ser un número del 1 al 31.</small>
+        </div>
+
+        <div class="swal-field">
            <label>Ingreso Mensual</label>
            <input id="swal_in_ingreso" type="number" step="0.01" class="swal-custom-input" placeholder="0.00" value="${item.ingreso_mensual != null ? item.ingreso_mensual : ''}">
            <small style="color: #ef4444; margin-top: 4px; display: none;" id="error_ingreso">El ingreso mensual es obligatorio y debe ser ≥ 0.</small>
@@ -920,17 +969,20 @@ function formatMsToDHMS(ms) {
         bindSanitizeInput(document.getElementById('swal_in_telefono'));
       },
       preConfirm: async () => {
-        const nombre = document.getElementById('swal_in_nombre')?.value.trim();
+        const nombreEntrada = document.getElementById('swal_in_nombre')?.value.trim();
+        const nombre = capitalizeName(nombreEntrada);
         const cedula_raw = document.getElementById('swal_in_cedula')?.value;
-        const cedula = sanitizeIdPhone(cedula_raw);
+        const cedula = formatCedula(cedula_raw);
         const N_casa_raw = document.getElementById('swal_in_N_casa')?.value.trim();
         const N_casa = N_casa_raw === '' ? undefined : N_casa_raw;
         const telefono_raw = document.getElementById('swal_in_telefono')?.value;
-        const telefono = sanitizeIdPhone(telefono_raw);
+        const telefono = formatTelefono(telefono_raw);
         const direccion = document.getElementById('swal_in_direccion')?.value.trim();
         const ingreso_mensual_raw = document.getElementById('swal_in_ingreso')?.value;
         const ingreso_mensual = ingreso_mensual_raw !== '' ? parseFloat(ingreso_mensual_raw) : NaN;
         const fecha_ospedaje = document.getElementById('swal_in_fecha_osp')?.value || '';
+        const fecha_pago_raw = document.getElementById('swal_in_fecha_pago')?.value;
+        const fecha_pago = fecha_pago_raw !== '' ? Number(fecha_pago_raw) : NaN;
         const descripcion = document.getElementById('swal_in_desc')?.value.trim();
 
         let hasError = false;
@@ -945,6 +997,7 @@ function formatMsToDHMS(ms) {
         // Sólo requerimos Nº de casa si NO existía antes y tampoco se proporcionó ahora
         setValidationError('error_N_casa', (N_casa === undefined && !item.N_casa) ? 'El Nº de Casa es obligatorio.' : null);
         setValidationError('error_fecha', !fecha_ospedaje ? 'La fecha de hospedaje es obligatoria.' : null);
+        setValidationError('error_fecha_pago', (isNaN(fecha_pago) || fecha_pago < 1 || fecha_pago > 31) ? 'La fecha de pago debe ser entre 1 y 31.' : null);
         setValidationError('error_direccion', !direccion ? 'La dirección es obligatoria.' : null);
         setValidationError('error_ingreso', (isNaN(ingreso_mensual) || ingreso_mensual < 0) ? 'El ingreso mensual es obligatorio y debe ser ≥ 0.' : null);
 
@@ -954,7 +1007,7 @@ function formatMsToDHMS(ms) {
         if (dup) { Swal.showValidationMessage('⚠️ Cédula duplicada. Otra persona ya tiene esta cédula.'); return false; }
 
         // Retornamos N_casa sólo si se proporcionó (evita sobreescribirlo con cadena vacía)
-        const out = { nombre, cedula, telefono, direccion, ingreso_mensual, fecha_ospedaje, descripcion };
+        const out = { nombre, cedula, telefono, direccion, ingreso_mensual, fecha_ospedaje, fecha_pago, descripcion };
         if (N_casa !== undefined) out.N_casa = N_casa;
         return out;
       }
@@ -1036,6 +1089,8 @@ function formatMsToDHMS(ms) {
       if (item.ingreso_mensual == null || isNaN(Number(item.ingreso_mensual))) { item.ingreso_mensual = Number(item.ingreso_mensual) || 0; changed = true; }
       // montoPagado default 0
       if (item.montoPagado == null || isNaN(Number(item.montoPagado))) { item.montoPagado = Number(item.montoPagado) || 0; changed = true; }
+      // fecha_pago (1..31 opcional)
+      if (item.fecha_pago == null || isNaN(Number(item.fecha_pago)) || Number(item.fecha_pago) < 1 || Number(item.fecha_pago) > 31) { item.fecha_pago = null; changed = true; }
       // normalize endTime
       const endNum = Number(item.endTime);
       if (!isFinite(endNum) || endNum <= 0) { item.endTime = Date.now() + DURATION_MS; changed = true; }
@@ -1088,6 +1143,7 @@ function formatMsToDHMS(ms) {
               ingreso_mensual: (i.ingreso_mensual != null) ? Number(i.ingreso_mensual) : 0,
               descripcion: i.descripcion || '',
               N_casa: i.N_casa != null ? i.N_casa : (i.inmueble_N_casa || null),
+              fecha_pago: (i.fecha_pago != null) ? Number(i.fecha_pago) : null,
               fecha_registro: i.fecha_registro || new Date().toISOString(),
               endTime: endTime
             };
@@ -1115,21 +1171,24 @@ function formatMsToDHMS(ms) {
   // ---------------- save new inquilino (POST y guardado local) ----------------
   async function handleGuardarClick(e) {
     e && e.preventDefault();
-    const nombre = (document.getElementById('nombre_inquilino')?.value || '').trim();
+    const nombreEntrada = (document.getElementById('nombre_inquilino')?.value || '').trim();
+    const nombre = capitalizeName(nombreEntrada);
     const cedula_raw = document.getElementById('cedula_inquilino')?.value;
-    const cedula = sanitizeIdPhone(cedula_raw);
+    const cedula = formatCedula(cedula_raw);
     const telefono_raw = document.getElementById('telefono_inquilino')?.value;
-    const telefono = sanitizeIdPhone(telefono_raw);
+    const telefono = formatTelefono(telefono_raw);
     const fecha_ospedaje = (document.getElementById('fecha_ospedaje')?.value || '').trim();
     const N_casa = (document.getElementById('nombre_casa_inquilino')?.value || '').trim();
     const direccion = (document.getElementById('direccion_fisica_inquilino')?.value || '').trim();
     const ingreso_mensual_raw = document.getElementById('ingreso_mensual')?.value;
     const ingreso_mensual = ingreso_mensual_raw !== '' ? parseFloat(ingreso_mensual_raw) : NaN;
     const descripcion = (document.getElementById('descripcion')?.value || '').trim();
+    const fecha_pago_raw = document.getElementById('fecha_pago_inquilino')?.value;
+    const fecha_pago = fecha_pago_raw !== '' ? Number(fecha_pago_raw) : NaN;
 
     // ahora todos menos descripcion son obligatorios
-    if (!nombre || !cedula || !telefono || !fecha_ospedaje || !N_casa || !direccion || isNaN(ingreso_mensual) || ingreso_mensual < 0) {
-      Swal.fire('Faltan campos','Completa todos los campos obligatorios (nombre, cédula, teléfono, fecha hospedaje, Nº casa, dirección, ingreso mensual).','warning');
+    if (!nombre || !cedula || !telefono || !fecha_ospedaje || !N_casa || !direccion || isNaN(ingreso_mensual) || ingreso_mensual < 0 || isNaN(fecha_pago) || fecha_pago < 1 || fecha_pago > 31) {
+      Swal.fire('Faltan campos','Completa todos los campos obligatorios (nombre, cédula, teléfono, fecha hospedaje, Nº casa, dirección, ingreso mensual, fecha pago 1-31).','warning');
       return;
     }
 
@@ -1138,13 +1197,13 @@ function formatMsToDHMS(ms) {
 
     const now = new Date();
     // create local item with temporary id
-    const item = { id: genId(), nombre, cedula, telefono, fecha_ospedaje, N_casa, direccion, ingreso_mensual, descripcion, fecha_registro: now.toISOString(), endTime: Date.now() + DURATION_MS };
+    const item = { id: genId(), nombre, cedula, telefono, fecha_ospedaje, N_casa, direccion, ingreso_mensual, descripcion, fecha_pago, fecha_registro: now.toISOString(), endTime: Date.now() + DURATION_MS };
 
     let serverResp = null;
     try {
       serverResp = await postToServer('inquilinos', {
         nombre: item.nombre, cedula: item.cedula, telefono: item.telefono,
-        direccion: item.direccion, fecha_ospedaje: item.fecha_ospedaje, ingreso_mensual: item.ingreso_mensual, descripcion: item.descripcion, N_casa: item.N_casa
+        direccion: item.direccion, fecha_ospedaje: item.fecha_ospedaje, ingreso_mensual: item.ingreso_mensual, descripcion: item.descripcion, N_casa: item.N_casa, fecha_pago: item.fecha_pago
       });
       if (serverResp && serverResp.id) {
         // if server returns the record, use server id; preserve endTime if server doesn't provide one
@@ -1305,7 +1364,11 @@ function formatMsToDHMS(ms) {
     diagnosticar: diagnosticarCajas,
     createBox, // Exponer para papelera
     readBoxesStorage, // Exponer para papelera
-    writeBoxesStorage // Exponer para papelera
+    writeBoxesStorage, // Exponer para papelera
+    sanitizeIdPhone,
+    formatCedula,
+    formatTelefono,
+    capitalizeName
   };
 
   // Alias para compatibilidad con papelera.js

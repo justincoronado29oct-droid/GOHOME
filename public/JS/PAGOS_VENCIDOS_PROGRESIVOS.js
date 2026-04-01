@@ -275,7 +275,29 @@
     const boxes = readBoxes();
     let dirty = false;
 
+    const currentDate = new Date();
+    const todayDay = currentDate.getDate();
+    const todayIso = currentDate.toISOString().slice(0,10);
+
     boxes.forEach(item => {
+      // Generar recibo automático en el día de pago programado (1-31)
+      const fp = Number(item.fecha_pago);
+      if (fp && Number.isInteger(fp) && fp >= 1 && fp <= 31 && fp === todayDay) {
+        if (item._lastReciboFecha !== todayIso) {
+          item._lastReciboFecha = todayIso;
+          dirty = true;
+          if (window.receipts && typeof window.receipts.generateReceipt === 'function') {
+            window.receipts.generateReceipt(item, { fecha: new Date().toISOString(), monto: Number(item.ingreso_mensual || 0), concepto: 'Recibo programado' })
+              .then(() => {
+                if (window.Swal) {
+                  Swal.fire({ icon:'success', title:'Recibo generado', text:`Recibo automático generado para el día ${String(fp).padStart(2, '0')}.`, timer: 1500, showConfirmButton: false });
+                }
+              })
+              .catch(e => console.warn('Error generando recibo automático:', e));
+          }
+        }
+      }
+
       if (!item.endTime) return;
 
       const boxEl = document.querySelector(

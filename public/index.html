@@ -114,21 +114,22 @@
            <input type="text" id="nombre_inquilino" class="input_crudd_inquilinos" placeholder=" Nombre completo" required>
             <br>
            <input type="text" id="cedula_inquilino" class="input_crudd_inquilinos" 
-        placeholder=" cédula (solo números y guiones)" required
-        oninput="this.value = window.inquilinosBoxesSwal.sanitizeIdPhone(this.value);">
+        placeholder=" cédula (formato 000-0000000-0)" required
+        oninput="this.value = window.inquilinosBoxesSwal.formatCedula(this.value);">
     <br>
     <input type="text" id="telefono_inquilino" class="input_crudd_inquilinos" 
-        placeholder=" Teléfono (solo números y guiones)" required
-        oninput="this.value = window.inquilinosBoxesSwal.sanitizeIdPhone(this.value);">
+        placeholder=" Teléfono (formato 000-000-0000)" required
+        oninput="this.value = window.inquilinosBoxesSwal.formatTelefono(this.value);">
    
             <br>
             <input type="date" id ="fecha_ospedaje" class="input_crudd_inquilinos" placeholder=" Fecha de hospedaje" required>
             <br>
-            <select id="nombre_casa_inquilino" class="input_crudd_inquilinos" required>
-            <option value="">-- Selecciona la casa --</option>
-            </select>
+            <input type="text" id="nombre_casa_inquilino" class="input_crudd_inquilinos" placeholder="Casa (ej. A12, 10B)" list="nombre_casa_datalist" required>
+            <datalist id="nombre_casa_datalist"></datalist>
               <br>
             <input type="text" id="direccion_fisica_inquilino" class="input_crudd_inquilinos" placeholder=" Dirección física (opcional)" required>
+            <br>
+            <input type="number" id="fecha_pago_inquilino" class="input_crudd_inquilinos" placeholder="Día de pago (1-31)" min="1" max="31" required>
             <br>
             <input type="number" id="ingreso_mensual" class="input_crudd_inquilinos" placeholder=" Ingreso mensual" required>
             <br>
@@ -191,9 +192,9 @@
             <form action="#" class="ingresoInmu">
                 <h1>🏠 Agregar inmuebles</h1>
                  <br>
-                <label for="N_casa">Número de casa</label>
+                <label for="N_casa">Número de casa (puede incluir letras)</label>
                 <br>
-                <input type="number" id="N_casa">
+                <input type="text" id="N_casa" placeholder="Ej: 12A, B-34, 101">
                 <br>
                 <label for="direccion">Dirección</label>
                 <br>

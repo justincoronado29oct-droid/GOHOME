@@ -92,8 +92,9 @@
   async function populateCasaSelect(opts = {}) {
     const cfg = { ...STATE.cfg, ...(opts || {}) };
     STATE.cfg = cfg; // persistir config si se pasó
-    const select = document.getElementById('nombre_casa_inquilino');
-    if (!select) return;
+    const input = document.getElementById('nombre_casa_inquilino');
+    const dataList = document.getElementById('nombre_casa_datalist');
+    if (!input || !dataList) return;
 
     // datos locales
     const localArr = (() => { try { return JSON.parse(localStorage.getItem('inmuebles')) || []; } catch (e) { return []; } })();
@@ -124,7 +125,27 @@
       return A.localeCompare(B, 'es', { numeric: true });
     });
 
-    // reconstruir select — formatear texto como "Casa #<N> - <direccion>"
+    // reconstruir datalist/ select alternativo
+    dataList.innerHTML = '';
+
+    entries.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = _optionValueOf(item, cfg);
+      const n = String(item.N_casa || item.nombre || '').trim();
+      const dir = String(item.direccion || item.direccion_fisica || '').trim();
+      if (dir) opt.dataset.direccion = dir;
+      if (item.id !== undefined) opt.dataset.id = String(item.id);
+      dataList.appendChild(opt);
+    });
+
+    // fill hidden select for compatibility (optional)
+    let select = document.getElementById('nombre_casa_inquilino_select_hidden');
+    if (!select) {
+      select = document.createElement('select');
+      select.id = 'nombre_casa_inquilino_select_hidden';
+      select.style.display = 'none';
+      document.body.appendChild(select);
+    }
     select.innerHTML = '';
     const placeholder = document.createElement('option');
     placeholder.value = '';
@@ -136,11 +157,9 @@
     entries.forEach(item => {
       const opt = document.createElement('option');
       opt.value = _optionValueOf(item, cfg);
-      // formato solicitado:
       const n = String(item.N_casa || item.nombre || '').trim();
       const dir = String(item.direccion || item.direccion_fisica || '').trim();
       opt.textContent = n ? `Casa #${n}${dir ? ' - ' + dir : ''}` : (opt.value || '');
-      // guardar direccion en dataset para uso posterior
       opt.dataset.direccion = dir;
       if (item.id !== undefined) opt.dataset.id = String(item.id);
       select.appendChild(opt);
@@ -152,59 +171,57 @@
 
   // ------------------ attach listener ------------------
   function attachCasaSelectListener() {
-    const select = document.getElementById('nombre_casa_inquilino');
-    if (!select) return;
+    const input = document.getElementById('nombre_casa_inquilino');
+    const datalist = document.getElementById('nombre_casa_datalist');
+    if (!input || !datalist) return;
 
-    select.addEventListener('change', async (e) => {
-      const opt = e.target.options[e.target.selectedIndex];
+    const onCasaChange = async (value) => {
       const direccionInput = document.getElementById('direccion_fisica_inquilino');
       if (!direccionInput) return;
 
-      const direccion = opt?.dataset?.direccion || '';
-      if (direccion) {
-        direccionInput.value = direccion;
-        // opcional: deshabilitar edición si viene desde inmueble
-        direccionInput.setAttribute('disabled', 'disabled');
-        return;
+      let direction = '';
+      const opt = Array.from(datalist.options).find(o => String(o.value).trim().toLowerCase() === String(value).trim().toLowerCase());
+      if (opt) {
+        direction = opt.dataset.direccion || '';
+      } else {
+        const local = (() => { try { return JSON.parse(localStorage.getItem('inmuebles')) || []; } catch (e) { return []; } })();
+        const found = local.find(i => String(i.N_casa || i.nombre || '').trim().toLowerCase() === String(value).trim().toLowerCase() || String(i.id || '').trim() === String(value).trim());
+        if (found) {
+          direction = found.direccion || found.direccion_fisica || '';
+        } else {
+          try {
+            const apiBase = (window.API_BASE || STATE.cfg.apiBase);
+            const r = await fetch(`${apiBase.replace(/\/$/, '')}/inmuebles`, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+            if (r.ok) {
+              const arr = await r.json();
+              const f = arr.find(i => String(i.N_casa || i.nombre || '').trim().toLowerCase() === String(value).trim().toLowerCase() || String(i.id || '').trim() === String(value).trim());
+              if (f) { direction = f.direccion || f.direccion_fisica || ''; }
+            }
+          } catch (e) { }
+        }
       }
 
-      const val = String(opt?.value || '').trim();
-      if (!val) {
+      if (direction) {
+        direccionInput.value = direction;
+        direccionInput.setAttribute('disabled', 'disabled');
+      } else {
         direccionInput.value = '';
         direccionInput.removeAttribute('disabled');
-        return;
       }
+    };
 
-      const local = (() => { try { return JSON.parse(localStorage.getItem('inmuebles')) || []; } catch (e) { return []; } })();
-      const found = local.find(i => String(i.N_casa || i.nombre || '').trim().toLowerCase() === val.toLowerCase() || String(i.id || '').trim() === val);
-      if (found) {
-        const dirFound = found.direccion || found.direccion_fisica || '';
-        direccionInput.value = dirFound;
-        if (opt) opt.dataset.direccion = dirFound;
-        direccionInput.setAttribute('disabled', 'disabled');
-        return;
-      }
-
-      // fallback servidor
-      try {
-        const apiBase = (window.API_BASE || STATE.cfg.apiBase);
-        const r = await fetch(`${apiBase.replace(/\/$/, '')}/inmuebles`, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
-        if (r.ok) {
-          const arr = await r.json();
-          const f = arr.find(i => String(i.N_casa || i.nombre || '').trim().toLowerCase() === val.toLowerCase() || String(i.id || '').trim() === val);
-          if (f) {
-            const dir = f.direccion || f.direccion_fisica || '';
-            direccionInput.value = dir;
-            if (opt) opt.dataset.direccion = dir;
-            direccionInput.setAttribute('disabled', 'disabled');
-            return;
-          }
-        }
-      } catch (e) { /* ignore */ }
-
-      direccionInput.value = '';
-      direccionInput.removeAttribute('disabled');
+    input.addEventListener('input', (e) => {
+      onCasaChange(e.target.value);
     });
+
+    // mantener compatibilidad con select oculto
+    const select = document.getElementById('nombre_casa_inquilino_select_hidden');
+    if (select) {
+      select.addEventListener('change', (e) => {
+        input.value = e.target.value;
+        onCasaChange(e.target.value);
+      });
+    }
   }
 
   // ------------------ actualizar una opción existente ------------------
