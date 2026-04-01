@@ -9,19 +9,32 @@
   function safeWrite(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){ console.warn('localStorage write failed', e); } }
 
   // calcula intereses simples por días completos desde movedAt (timestamp ms)
-  function calcInterest(deudaOriginal, movedAt){
+  function calcInterest(deudaOriginal, movedAt, monthlyPayment){
     const moved = Number(movedAt) || Date.now();
     const elapsedMs = Date.now() - moved;
     const days = Math.floor(elapsedMs / MS_PER_DAY);
     if (days <= 0) return 0;
-    const interest = (deudaOriginal * INTEREST_RATE) * days;
+
+    const deuda = Number(deudaOriginal || 0);
+    const mensual = Number(monthlyPayment != null ? monthlyPayment : deuda || 0);
+
+    // Interés diario de 5% sobre la deuda original
+    let interest = deuda * INTEREST_RATE * days;
+
+    // Si pasa al menos un mes completo, sumar "lo que debe + pago mensual" por cada mes completo
+    const months = Math.floor(days / 30);
+    if (months >= 1) {
+      interest += (deuda + mensual) * months;
+    }
+
     return Math.round(interest * 100) / 100;
   }
 
   // obtiene total actual esperado para un objeto pending (usa deudaOriginal y movedAt)
   function expectedTotalForPending(pending){
     const deuda = Number(pending.deudaOriginal != null ? pending.deudaOriginal : (pending.monto != null ? pending.monto : 0)) || 0;
-    const interest = calcInterest(deuda, pending.movedAt || pending.movedAt === 0 ? pending.movedAt : Date.now());
+    const mensual = Number(pending.monto != null ? pending.monto : 0);
+    const interest = calcInterest(deuda, pending.movedAt || pending.movedAt === 0 ? pending.movedAt : Date.now(), mensual);
     return Math.round((deuda + interest) * 100) / 100;
   }
 
@@ -141,15 +154,27 @@
   function safeParse(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } }
   function safeWrite(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){ console.warn('localStorage write failed', e); } }
 
-  function calcInterest(deudaOriginal, movedAt){
+  function calcInterest(deudaOriginal, movedAt, monthlyPayment){
     const moved = Number(movedAt) || Date.now();
     const days = Math.floor((Date.now() - moved) / MS_PER_DAY);
-    return days > 0 ? Math.round((deudaOriginal * INTEREST_RATE * days) * 100) / 100 : 0;
+    if (days <= 0) return 0;
+
+    const deuda = Number(deudaOriginal || 0);
+    const mensual = Number(monthlyPayment != null ? monthlyPayment : deuda || 0);
+    let interest = deuda * INTEREST_RATE * days;
+
+    const months = Math.floor(days / 30);
+    if (months >= 1) {
+      interest += (deuda + mensual) * months;
+    }
+
+    return Math.round(interest * 100) / 100;
   }
 
   function expectedTotalForPending(p){
     const deuda = Number(p.deudaOriginal ?? p.monto ?? 0);
-    return Math.round((deuda + calcInterest(deuda, p.movedAt)) * 100) / 100;
+    const mensual = Number(p.monto ?? 0);
+    return Math.round((deuda + calcInterest(deuda, p.movedAt, mensual)) * 100) / 100;
   }
 
   function removePendingCardFromDOM(id){

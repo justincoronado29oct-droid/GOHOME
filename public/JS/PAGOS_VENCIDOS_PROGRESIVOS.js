@@ -46,16 +46,19 @@
     const dias = Math.floor(overdueMs / DIA_MS);
     const MES_MS = 30 * DIA_MS; // 30 días = 1 mes
     const mesesVencidos = Math.floor(overdueMs / MES_MS);
-    
-    // Deuda base multiplicada por cantidad de meses vencidos
-    const deudaPorMeses = base * Math.max(1, mesesVencidos);
-    
-    return { 
-      dias, 
+
+    const deudaBase = Number(base || 0);
+    const deudaPorMeses = deudaBase * (1 + mesesVencidos); // 1 mes = deuda + pago mensual adicional
+
+    const interes = Math.round((deudaBase * 0.05 * Math.max(0, dias)) * 100) / 100;
+    const total = Math.round((deudaPorMeses + interes) * 100) / 100;
+
+    return {
+      dias,
       mesesVencidos,
       deudaPorMeses,
-      interes: 0,
-      total: deudaPorMeses
+      interes,
+      total
     };
   }
 
@@ -64,21 +67,24 @@
     const dias = Math.floor(overdueMs / DIA_MS);
     const MES_MS = 30 * DIA_MS; // 30 días = 1 mes
     const mesesVencidos = Math.floor(overdueMs / MES_MS);
-    
-    // Deuda base multiplicada por cantidad de meses vencidos
-    const deudaPorMeses = base * Math.max(1, mesesVencidos);
-    
+
+    const deudaBase = Number(base || 0);
+    const deudaPorMeses = deudaBase * (1 + mesesVencidos);
+
     const pag = Number(pagado || 0);
     const falta = Math.max(0, deudaPorMeses - pag);
-    
-    return { 
-      dias, 
+
+    const interes = Math.round((deudaBase * 0.05 * Math.max(0, dias)) * 100) / 100;
+    const total = Math.round((falta + interes) * 100) / 100;
+
+    return {
+      dias,
       mesesVencidos,
       deudaPorMeses,
-      pagado: pag, 
+      pagado: pag,
       falta,
-      interes: 0,
-      total: falta
+      interes,
+      total
     };
   }
 
@@ -135,7 +141,8 @@
       <div style="font-weight:800; color:#991b1b; margin-bottom:6px;">
         ⛔ ESTATUS: PENDIENTE (${calc.mesesVencidos} mes${calc.mesesVencidos !== 1 ? 'es' : ''})
       </div>
-      <div>💰 Deuda por meses: <strong>$${money(calc.deudaPorMeses)}</strong> (${calc.mesesVencidos} × ${money(calc.deudaPorMeses / Math.max(1, calc.mesesVencidos))})</div>
+      <div>💰 Deuda por meses: <strong>$${money(calc.deudaPorMeses)}</strong> (${calc.mesesVencidos} mes${calc.mesesVencidos !== 1 ? 'es' : ''})</div>
+      <div>📈 Interés acumulado: <strong>$${money(calc.interes)}</strong> (5% diario)</div>
       <div style="margin-top:6px; font-weight:900; color:#7f1d1d;">
         TOTAL A PAGAR: $${money(calc.total)}
       </div>
@@ -172,9 +179,10 @@
       <div style="font-weight:800; color:#92400e; margin-bottom:6px;">
         ⚠️ ESTATUS: INCOMPLETO (${info.mesesVencidos} mes${info.mesesVencidos !== 1 ? 'es' : ''})
       </div>
-      <div>💰 Deuda por meses: <strong>$${money(info.deudaPorMeses)}</strong> (${info.mesesVencidos} × ${money(info.deudaPorMeses / Math.max(1, info.mesesVencidos))})</div>
+      <div>💰 Deuda por meses: <strong>$${money(info.deudaPorMeses)}</strong> (${info.mesesVencidos} mes${info.mesesVencidos !== 1 ? 'es' : ''})</div>
       <div>💰 Pagado: <strong>$${money(info.pagado)}</strong></div>
       <div>💰 Falta por pagar: <strong style="color:#b45309;">$${money(info.falta)}</strong></div>
+      <div>📈 Interés acumulado: <strong>$${money(info.interes)}</strong> (5% diario)</div>
       <div style="margin-top:6px; font-weight:900; color:#78350f;">
         TOTAL A PAGAR: $${money(info.total)}</div>
     `;

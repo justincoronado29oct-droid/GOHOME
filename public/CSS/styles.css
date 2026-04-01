@@ -1025,9 +1025,58 @@ section {
 }
 
 .box_container{
-    padding: 90px;
+    padding: 24px 20px 30px;
     display: grid;
-    grid-template-columns: repeat(3,1fr);
+    grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
+    gap: 18px;
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.house-group {
+    background: linear-gradient(180deg,rgba(18, 44, 75,0.14),rgba(255,255,255,0.6));
+    border: 1px solid rgba(16, 185, 129,0.24);
+    border-radius: 20px;
+    backdrop-filter: blur(6px);
+    padding: 16px;
+    box-shadow: 0 16px 35px rgba(6, 34, 60,0.1);
+    display: grid;
+    gap: 12px;
+}
+
+.house-group-header {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #0f2a4c;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: linear-gradient(120deg,rgba(189, 232, 255,0.42),rgba(246, 252, 255,0.75));
+    border: 1px solid rgba(14, 118, 168,0.28);
+}
+
+.house-group-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    gap: 12px;
+    padding: 6px;
+}
+
+.inquilino-box {
+  width: 100%;
+  min-width: auto;
+  background: #ffffff;
+  border: 1px solid rgba(28, 40, 66, 0.10);
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 8px 20px rgba(14, 36, 87, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.inquilino-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 26px rgba(14, 36, 87, 0.16);
 }
 
 .inquilinosInfo{

@@ -21,6 +21,7 @@
       .inquilino-hidden { display: none !important; opacity: .0; height: 0 !important; margin: 0 !important; padding: 0 !important; transition: none !important; }
       .inquilino-match { box-shadow: 0 6px 18px rgba(2,6,23,0.06); transform: translateY(-2px); transition: all .18s ease; }
       .match-token { background: linear-gradient(90deg, rgba(255,241,204,0.65), rgba(255,249,215,0.45)); padding: 0 2px; border-radius: 3px; }
+      .house-group-header { font-weight: 700; margin: 8px 0 4px; padding: 8px 12px; border-radius: 8px; background: #e0f2fe; border: 1px solid #7dd3fc; color: #0369a1; }
     `;
     document.head.appendChild(style);
   }
@@ -183,15 +184,72 @@
         _resetHighlight(box);
       }
     });
+
+    // Re-render group headers tras aplicar filtro para mantener agrupamiento limpio
+    refreshHouseGroupHeaders();
   }
 
   const debouncedFilter = debounce(doFilterRaw, DEBOUNCE_MS);
 
+  function refreshHouseGroupHeaders(){
+    const container = document.querySelector('.box_container');
+    if (!container) return;
+
+    // Recolectar todas las cajas actuales (pueden estar dentro de grupos previos)
+    const allBoxes = Array.from(container.querySelectorAll('.inquilino-box'));
+    const boxesByCasa = new Map();
+    const userlessBoxes = [];
+
+    allBoxes.forEach(box => {
+      const n = (box.dataset.n_casa || '').trim();
+      if (n) {
+        if (!boxesByCasa.has(n)) boxesByCasa.set(n, []);
+        boxesByCasa.get(n).push(box);
+      } else {
+        userlessBoxes.push(box);
+      }
+    });
+
+    // Limpiar contenedor
+    container.innerHTML = '';
+
+    // Re-agrupar por casas con 2+ inquilinos en un mismo grupo
+    for (const [n_casa, groupBoxes] of boxesByCasa.entries()) {
+      if (groupBoxes.length > 1) {
+        const group = document.createElement('div');
+        group.className = 'house-group';
+        group.dataset.n_casa = n_casa;
+
+        const header = document.createElement('div');
+        header.className = 'house-group-header';
+        header.textContent = `Casa ${n_casa} · ${groupBoxes.length} inquilinos`;
+
+        const list = document.createElement('div');
+        list.className = 'house-group-list';
+
+        groupBoxes.forEach(b => list.appendChild(b));
+        group.appendChild(header);
+        group.appendChild(list);
+
+        const anyVisible = groupBoxes.some(b => !b.classList.contains('inquilino-hidden'));
+        group.style.display = anyVisible ? '' : 'none';
+        container.appendChild(group);
+      } else if (groupBoxes.length === 1) {
+        userlessBoxes.push(groupBoxes[0]);
+      }
+    }
+
+    // Añadir inquilinos sin grupo (casa única o sin casa)
+    userlessBoxes.forEach(box => container.appendChild(box));
+  }
+
   // ================== INICIALIZACIÓN Y EXPOSICIÓN ==================
   function init(){
+
     injectStyles();
     indexAllBoxes();
     observeBoxes();
+    refreshHouseGroupHeaders();
 
     // conectar al input si existe
     const input = document.getElementById(SEARCH_INPUT_ID);
@@ -213,7 +271,18 @@
       const i = document.getElementById(SEARCH_INPUT_ID);
       if (i) i.value = '';
       doFilterRaw('');
+      refreshHouseGroupHeaders();
     };
+
+    window.filterInquilinosByCasa = function(casa){
+      const normalized = String(casa || '').trim();
+      const i = document.getElementById(SEARCH_INPUT_ID);
+      if (i) i.value = normalized;
+      doFilterRaw(normalized);
+      refreshHouseGroupHeaders();
+    };
+
+    window.groupInquilinosByCasa = refreshHouseGroupHeaders;
 
     // Si ya había texto en el input al cargar, ejecutar filtro
     setTimeout(() => {
