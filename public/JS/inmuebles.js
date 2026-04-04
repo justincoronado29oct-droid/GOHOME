@@ -420,52 +420,42 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Guardar localmente primero (optimistic UI) — ahora reemplaza si ya existe
-    guardarLocalStorage(nuevoInmueble);
-    crearCajaInmueble(nuevoInmueble);
-
-    // Intentar crear en servidor y si retorna el registro creado, actualizar localStorage con el id real
+    // Intentar crear en servidor primero
+    let serverResp = null;
     try {
       const res = await enviarAlServidor({ url: API_BASE, method: 'POST', body: _mapInmuebleClientToServer(nuevoInmueble), okStatus: [200, 201] });
       if (res.ok && res.data) {
-        // Si el servidor devuelve el registro creado (con id), actualizar localStorage
-        const created = Array.isArray(res.data) ? res.data[0] : res.data;
-        if (created && created.id) {
-          // Reemplazar la entrada local (buscar por N_casa)
-          let data = JSON.parse(localStorage.getItem('inmuebles')) || [];
-          const idx = data.findIndex(i => String(i.N_casa) === String(created.N_casa));
-          if (idx !== -1) {
-            data[idx] = { ...data[idx], ...created };
-            localStorage.setItem('inmuebles', JSON.stringify(data));
-          } else {
-            // si no existe, añadir
-            data.push(created);
-            localStorage.setItem('inmuebles', JSON.stringify(data));
-          }
-        }
+        serverResp = Array.isArray(res.data) ? res.data[0] : res.data;
+        // Usar el id del servidor
+        nuevoInmueble.id = serverResp.id;
       } else {
-        console.warn('⚠️ El servidor respondió con error al crear inmueble:', res);
+        throw new Error('Respuesta del servidor inválida');
       }
     } catch (err) {
-      console.warn('⚠️ No se pudo conectar al servidor, pero se guardó localmente.');
+      console.warn('⚠️ No se pudo guardar en el servidor:', err);
+      Swal.fire('Error', 'No se pudo guardar el inmueble en la base de datos. Verifica la conexión al servidor.', 'error');
+      return;
     }
 
-    Swal.fire('Inmueble agregado', 'Guardado con éxito.', 'success');
+    // Guardar localmente después de confirmar en servidor
+    guardarLocalStorage(nuevoInmueble);
+    crearCajaInmueble(nuevoInmueble);
+
+    Swal.fire('Inmueble agregado', 'Guardado en la base de datos con éxito.', 'success');
     try {
-      const toNotify = (typeof created !== 'undefined' && created) ? created : nuevoInmueble;
       if (window.notifications) {
         if (typeof window.notifications.requestPermission === 'function') {
           window.notifications.requestPermission().then(p => {
             if (p === 'granted') {
-              if (typeof window.notifications.notifyInmuebleAdded === 'function') window.notifications.notifyInmuebleAdded(toNotify);
+              if (typeof window.notifications.notifyInmuebleAdded === 'function') window.notifications.notifyInmuebleAdded(nuevoInmueble);
             } else if (p === 'denied') {
               Swal.fire({ title: 'Notificaciones bloqueadas', text: 'Activa las notificaciones en la configuración del navegador para recibir alertas.', icon: 'info', confirmButtonColor: '#3085d6' });
             }
           }).catch(() => {
-            if (typeof window.notifications.notifyInmuebleAdded === 'function') window.notifications.notifyInmuebleAdded(toNotify);
+            if (typeof window.notifications.notifyInmuebleAdded === 'function') window.notifications.notifyInmuebleAdded(nuevoInmueble);
           });
         } else if (typeof window.notifications.notifyInmuebleAdded === 'function') {
-          window.notifications.notifyInmuebleAdded(toNotify);
+          window.notifications.notifyInmuebleAdded(nuevoInmueble);
         }
       }
     } catch(e){}

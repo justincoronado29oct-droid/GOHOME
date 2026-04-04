@@ -1203,7 +1203,7 @@ function formatMsToDHMS(ms) {
     try {
       serverResp = await postToServer('inquilinos', {
         nombre: item.nombre, cedula: item.cedula, telefono: item.telefono,
-        direccion: item.direccion, fecha_ospedaje: item.fecha_ospedaje, ingreso_mensual: item.ingreso_mensual, descripcion: item.descripcion, N_casa: item.N_casa, fecha_pago: item.fecha_pago
+        direccion: item.direccion, fecha_ospedaje: item.fecha_ospedaje, ingreso_mensual: item.ingreso_mensual, descripcion: item.descripcion, N_casa: item.N_casa
       });
       if (serverResp && serverResp.id) {
         // if server returns the record, use server id; preserve endTime if server doesn't provide one
@@ -1212,8 +1212,14 @@ function formatMsToDHMS(ms) {
         if (serverResp.endTime) item.endTime = serverResp.endTime;
         item.fecha_registro = serverResp.fecha_registro || item.fecha_registro;
         item.direccion = serverResp.direccion || item.direccion;
+      } else {
+        throw new Error('Respuesta del servidor inválida');
       }
-    } catch (e) { console.warn('POST inquilino failed', e); }
+    } catch (e) {
+      console.warn('POST inquilino failed', e);
+      Swal.fire({ title: 'Error', text: 'No se pudo guardar el inquilino en la base de datos. Verifica la conexión al servidor.', icon: 'error', confirmButtonColor: '#ef4444' });
+      return;
+    }
 
     try { const arr = readBoxesStorage(); arr.unshift(item); writeBoxesStorage(arr); } catch(e){ console.warn(e); }
     createBox(item);
@@ -1238,8 +1244,7 @@ function formatMsToDHMS(ms) {
     openDetailModal(item);
     if (form) form.reset();
 
-    if (serverResp) Swal.fire({ title: 'Creado', text: 'Inquilino creado en servidor y guardado localmente.', icon: 'success', confirmButtonColor: '#10b981' });
-    else Swal.fire({ title: 'Creado localmente', text: 'No se pudo crear en servidor; registro guardado localmente.', icon: 'warning', confirmButtonColor: '#10b981' });
+    Swal.fire({ title: 'Creado', text: 'Inquilino guardado en la base de datos y localmente.', icon: 'success', confirmButtonColor: '#10b981' });
   }
 
   if (btnGuardar) btnGuardar.addEventListener('click', handleGuardarClick);
