@@ -59,10 +59,9 @@ const pool = mysql.createPool({
   queueLimit: 0,
   connectTimeout: 60000, // Aumentado a 60s
   enableKeepAlive: true,
-  keepAliveInitialDelayMs: 30000,
-  ssl: 'amazon', // Compatible con Railway/RDS
-  authPlugins: {
-    mysql_clear_password: () => () => process.env.DB_PASS
+  ssl: {
+    rejectUnauthorized: false,
+    minVersion: 'TLSv1.2'
   }
 });
 
@@ -1193,12 +1192,6 @@ async function startServer() {
   
   // Comenzar intentos de conexión
   tryConnectDB();
-      console.error(`⛔ Puerto ${PORT} en uso. Mata el proceso que lo usa o cambia la variable PORT.`);
-    } else {
-      console.error('Server error:', err);
-    }
-    process.exit(1);
-  });
 }
 
 function shutdown(signal) {
