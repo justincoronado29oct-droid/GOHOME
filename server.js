@@ -55,31 +55,69 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT),
   waitForConnections: true,
-  connectionLimit: 5,
-  connectTimeout: 30000,
-  ssl: {
-    rejectUnauthorized: false
+  connectionLimit: 10,
+  queueLimit: 0,
+  connectTimeout: 60000, // Aumentado a 60s
+  enableKeepAlive: true,
+  keepAliveInitialDelayMs: 30000,
+  ssl: 'amazon', // Compatible con Railway/RDS
+  authPlugins: {
+    mysql_clear_password: () => () => process.env.DB_PASS
   }
 });
 
+// Test inicial de conexión (sin bloquear startup)
+let dbConnected = false;
 (async () => {
   try {
     const conn = await pool.getConnection();
     console.log(`✅ Conectado a MySQL en ${process.env.DB_HOST}:${process.env.DB_PORT}`);
+    dbConnected = true;
     conn.release();
-
-    // Crear tablas si no existen
-    await ensureAllTables();
   } catch (err) {
-    console.error(`❌ Error conectando a la base de datos: ${err.message}`);
-    console.error(`   Verificar: MySQL activo en ${process.env.DB_HOST}:${process.env.DB_PORT}`);
+    console.error(`⚠️ Error inicial conectando a la base de datos: ${err.message}`);
+    console.error(`   Reintentando en 5s...`);
+    setTimeout(() => ensureDBConnection(), 5000);
   }
 })();
 
+// Reintentar conexión periódicamente
+async function ensureDBConnection() {
+  if (dbConnected) return;
+  try {
+    const conn = await pool.getConnection();
+    console.log(`✅ Reconectado a MySQL`);
+    dbConnected = true;
+    conn.release();
+  } catch (err) {
+    console.error(`⚠️ Reintentando conexión DB...`, err.message);
+    setTimeout(() => ensureDBConnection(), 10000);
+  }
+}
+
 // ----------------- HELPERS -----------------
-async function query(sql, params = []) {
-  const [rows] = await pool.execute(sql, params);
-  return rows;
+async function query(sql, params = [], retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const [rows] = await pool.execute(sql, params);
+      if (attempt > 1) {
+        console.log(`✅ Query exitoso en intento ${attempt}`);
+        dbConnected = true;
+      }
+      return rows;
+    } catch (err) {
+      if (attempt === retries) {
+        dbConnected = false;
+        throw err;
+      }
+      if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNREFUSED') {
+        console.warn(`⚠️ Connection lost en intento ${attempt}, reintentando...`);
+        await new Promise(r => setTimeout(r, 1000 * attempt)); // Backoff exponencial
+      } else {
+        throw err;
+      }
+    }
+  }
 }
 
 /**
@@ -127,7 +165,7 @@ async function ensureAllTables() {
       fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_N_casa (N_casa),
       INDEX idx_direccion (direccion)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`, [], 5);
 
     // inquilinos
     await query(`CREATE TABLE IF NOT EXISTS inquilinos (
@@ -146,7 +184,7 @@ async function ensureAllTables() {
       INDEX idx_nombre (nombre),
       INDEX idx_cedula (cedula),
       INDEX idx_N_casa (N_casa)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`, [], 5);
 
     // pagos_pendientes
     await query(`CREATE TABLE IF NOT EXISTS pagos_pendientes (
@@ -156,7 +194,7 @@ async function ensureAllTables() {
       fecha_pago DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (id_inquilino) REFERENCES inquilinos(id) ON DELETE CASCADE,
       INDEX idx_id_inquilino (id_inquilino)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`, [], 5);
 
     // pagos_incompletos
     await query(`CREATE TABLE IF NOT EXISTS pagos_incompletos (
@@ -171,7 +209,7 @@ async function ensureAllTables() {
       FOREIGN KEY (id_inquilino) REFERENCES inquilinos(id) ON DELETE CASCADE,
       INDEX idx_id_inquilino (id_inquilino),
       INDEX idx_usuario_id (usuario_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`, [], 5);
 
     // papelera
     await query(`CREATE TABLE IF NOT EXISTS papelera (
@@ -181,11 +219,11 @@ async function ensureAllTables() {
       eliminado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_tipo (tipo),
       INDEX idx_eliminado_en (eliminado_en)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`, [], 5);
 
     console.log('✅ Tablas verificadas/creadas');
   } catch (e) {
-    console.warn('No se pudieron crear/verificar tablas:', e);
+    console.warn('⚠️ No se pudieron crear/verificar tablas:', e.message);
   }
 }
 
@@ -814,9 +852,12 @@ const bcrypt = require('bcryptjs');
       gmail VARCHAR(200) UNIQUE,
       contrasena VARCHAR(255),
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`, [], 5);
     console.log('✅ Tabla info_usuarios verificada/creada');
-  } catch(e){ console.warn('No se pudo crear/verificar tabla info_usuarios', e); }
+  } catch(e){ 
+    console.warn('⚠️ No se pudo crear/verificar tabla info_usuarios:', e.message);
+    // Reintentar más tarde durante el startup
+  }
 })();
 
 // GET users or check by gmail
@@ -998,9 +1039,11 @@ async function sendEmail(to, subject, html) {
       subject VARCHAR(255),
       meta JSON,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`, [], 5);
     console.log('✅ Tabla notification_history verificada/creada');
-  } catch(e){ console.warn('No se pudo crear/verificar tabla notification_history', e); }
+  } catch(e){ 
+    console.warn('⚠️ No se pudo crear/verificar tabla notification_history:', e.message);
+  }
 })();
 
 async function recordNotification(type, entity, entity_id, to_email, subject, meta) {
@@ -1095,26 +1138,61 @@ let server = null;
 
 
 async function startServer() {
-  try {
-    await pool.query('SELECT 1');
-    console.log(`✅ Base de datos conectada (${process.env.DB_NAME || 'railway'})`);
-
-    // Asegurar que las tablas existan
-    await ensureAllTables();
-
-    // Iniciar checker de notificaciones
-    checkDueNotifications().catch(console.error);
-  } catch (err) {
-    console.error('❌ Error conectando a la base de datos:', err.message || err);
-    if (process.env.NODE_ENV === 'production') process.exit(1);
-  }
-
+  // Iniciar servidor sin esperar a la BD
   server = app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT} (env=${process.env.NODE_ENV || 'development'})`);
+    console.log(`🚀 Server listening on port ${PORT} (env=${process.env.NODE_ENV || 'development'})`);
   });
 
   server.on('error', (err) => {
     if (err && err.code === 'EADDRINUSE') {
+      console.error(`⛔ Puerto ${PORT} en uso. Mata el proceso que lo usa o cambia la variable PORT.`);
+    } else {
+      console.error('Server error:', err);
+    }
+    process.exit(1);
+  });
+
+  // Intentar conectar a la BD (no bloquea el startup)
+  let dbAttempts = 0;
+  const maxAttempts = 10;
+  
+  async function tryConnectDB() {
+    dbAttempts++;
+    try {
+      await pool.query('SELECT 1');
+      console.log(`✅ Base de datos conectada (${process.env.DB_NAME || 'railway'})`);
+      dbConnected = true;
+      
+      // Crear tablas una vez conectado
+      try {
+        await ensureAllTables();
+      } catch (e) {
+        console.warn('⚠️ Error creando tablas iniciales:', e.message);
+      }
+      
+      // Iniciar checker de notificaciones
+      try {
+        checkDueNotifications().catch(err => console.error('Notification checker error:', err.message));
+      } catch (e) {
+        console.warn('⚠️ Error iniciando notificaciones:', e.message);
+      }
+    } catch (err) {
+      console.warn(`⚠️ Intento ${dbAttempts}/${maxAttempts} - Error conectando a BD: ${err.message}`);
+      dbConnected = false;
+      
+      if (dbAttempts < maxAttempts) {
+        const delayMs = Math.min(5000 * dbAttempts, 30000); // Max 30s
+        console.log(`   Reintentando en ${delayMs / 1000}s...`);
+        setTimeout(tryConnectDB, delayMs);
+      } else {
+        console.error('❌ No se pudo conectar a la BD después de múltiples intentos');
+        console.error('   El servidor está corriendo pero sin acceso a datos');
+      }
+    }
+  }
+  
+  // Comenzar intentos de conexión
+  tryConnectDB();
       console.error(`⛔ Puerto ${PORT} en uso. Mata el proceso que lo usa o cambia la variable PORT.`);
     } else {
       console.error('Server error:', err);
