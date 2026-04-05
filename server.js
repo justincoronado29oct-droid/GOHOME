@@ -7,27 +7,22 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const path = require("path");
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// Seguridad (primero)
+app.set('trust proxy', 1);
+app.use(helmet({
+  contentSecurityPolicy: false, // Permitir cargar CSS/JS locales
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
-
-
-
-
-
-
-
-
-
-// conf proxy / seguridad
-app.set('trust proxy', 1); // si usas reverse proxy
-app.use(helmet());
-
+// CORS
 const corsOptions = process.env.CORS_ORIGINS ? { origin: process.env.CORS_ORIGINS.split(',') } : { origin: true };
 app.use(cors(corsOptions));
-app.use(express.json());
 
-// Rate limiter (ajustable con variables de entorno)
+// Parsing
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Rate limiter
 const limiter = rateLimit({
   windowMs: process.env.RATE_LIMIT_WINDOW_MS ? parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) : 15 * 60 * 1000,
   max: process.env.RATE_LIMIT_MAX ? parseInt(process.env.RATE_LIMIT_MAX, 10) : 200,
@@ -36,13 +31,19 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Forzar HTTPS si se configura en producción detrás de proxy (setear FORCE_HTTPS=1)
+// **ARCHIVOS ESTÁTICOS** (CSS, JS, imágenes) - DEBE ESTAR ANTES DE LAS RUTAS
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1h',
+  etag: false
+}));
+
+// Forzar HTTPS si se configura en producción detrás de proxy
 if (process.env.FORCE_HTTPS === '1') {
   app.use((req, res, next) => {
     if (req.secure || req.headers['x-forwarded-proto'] === 'https') return next();
     return res.redirect(`https://${req.headers.host}${req.url}`);
   });
-} 
+}
 
 // ----------------- CONFIG DB -----------------
 // IMPORTANT: move secrets to environment (.env) and DO NOT commit .env to git
