@@ -67,6 +67,9 @@ const pool = mysql.createPool({
     const conn = await pool.getConnection();
     console.log(`✅ Conectado a MySQL en ${process.env.DB_HOST}:${process.env.DB_PORT}`);
     conn.release();
+
+    // Crear tablas si no existen
+    await ensureAllTables();
   } catch (err) {
     console.error(`❌ Error conectando a la base de datos: ${err.message}`);
     console.error(`   Verificar: MySQL activo en ${process.env.DB_HOST}:${process.env.DB_PORT}`);
@@ -107,6 +110,84 @@ function safeFloat(v, fallback = null) {
 }
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+
+// ----------------- ENSURE TABLES -----------------
+async function ensureAllTables() {
+  try {
+    // inmuebles
+    await query(`CREATE TABLE IF NOT EXISTS inmuebles (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      N_casa INT NOT NULL UNIQUE,
+      direccion VARCHAR(300) NOT NULL,
+      sector VARCHAR(200) NOT NULL,
+      municipio VARCHAR(200) NOT NULL,
+      m_contruccion VARCHAR(100),
+      m_terreno VARCHAR(100),
+      descripcion TEXT,
+      fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_N_casa (N_casa),
+      INDEX idx_direccion (direccion)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+
+    // inquilinos
+    await query(`CREATE TABLE IF NOT EXISTS inquilinos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      nombre VARCHAR(200) NOT NULL,
+      cedula VARCHAR(50) NOT NULL,
+      telefono VARCHAR(50) NOT NULL,
+      fecha_ospedaje DATE NOT NULL,
+      ingreso_mensual DECIMAL(12,2) NOT NULL,
+      descripcion TEXT,
+      pago DECIMAL(12,2) DEFAULT NULL,
+      fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+      N_casa INT,
+      direccion VARCHAR(300),
+      FOREIGN KEY (N_casa) REFERENCES inmuebles(N_casa) ON DELETE SET NULL,
+      INDEX idx_nombre (nombre),
+      INDEX idx_cedula (cedula),
+      INDEX idx_N_casa (N_casa)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+
+    // pagos_pendientes
+    await query(`CREATE TABLE IF NOT EXISTS pagos_pendientes (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      id_inquilino INT,
+      monto DECIMAL(12,2),
+      fecha_pago DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (id_inquilino) REFERENCES inquilinos(id) ON DELETE CASCADE,
+      INDEX idx_id_inquilino (id_inquilino)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+
+    // pagos_incompletos
+    await query(`CREATE TABLE IF NOT EXISTS pagos_incompletos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      id_inquilino INT,
+      monto DECIMAL(12,2),
+      fecha_pago DATETIME DEFAULT CURRENT_TIMESTAMP,
+      usuario_id INT,
+      metadata JSON,
+      raw LONGTEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (id_inquilino) REFERENCES inquilinos(id) ON DELETE CASCADE,
+      INDEX idx_id_inquilino (id_inquilino),
+      INDEX idx_usuario_id (usuario_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+
+    // papelera
+    await query(`CREATE TABLE IF NOT EXISTS papelera (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      tipo VARCHAR(50),
+      objeto JSON,
+      eliminado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_tipo (tipo),
+      INDEX idx_eliminado_en (eliminado_en)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+
+    console.log('✅ Tablas verificadas/creadas');
+  } catch (e) {
+    console.warn('No se pudieron crear/verificar tablas:', e);
+  }
+}
 
 // ----------------- RUTAS CRUD -----------------
 
@@ -536,15 +617,12 @@ app.get('/pagos_incompletos', async (req, res) => {
 
 app.post('/pagos_incompletos', async (req, res) => {
   try {
-    const { id_inquilino, nombre, cedula, direccion, monto, usuario_id, metadata, raw } = req.body;
+    const { id_inquilino, monto, usuario_id, metadata, raw } = req.body;
     const result = await query(
-      `INSERT INTO pagos_incompletos (id_inquilino, nombre, cedula, direccion, monto, usuario_id, metadata, raw)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO pagos_incompletos (id_inquilino, monto, usuario_id, metadata, raw)
+       VALUES (?, ?, ?, ?, ?)`,
       [
         id_inquilino ? safeInt(id_inquilino) : null,
-        nombre || null,
-        cedula || null,
-        direccion || null,
         safeFloat(monto, 0),
         usuario_id ? safeInt(usuario_id) : null,
         metadata ? JSON.stringify(metadata) : null,
@@ -634,7 +712,7 @@ app.post('/papelera/:id/restore', async (req, res) => {
             if (t.tipo === 'pago_pendiente') {
               await query('INSERT INTO pagos_pendientes (id_inquilino, monto, fecha_pago) VALUES (?, ?, ?)', [newInq.id, obj.monto || 0, obj.fecha_pago || null]);
             } else {
-              await query('INSERT INTO pagos_incompletos (id_inquilino, nombre, cedula, direccion, monto, usuario_id, metadata, raw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [newInq.id, obj.nombre || null, obj.cedula || null, obj.direccion || null, obj.monto || 0, obj.usuario_id || null, obj.metadata ? JSON.stringify(obj.metadata) : null, obj.raw || null]);
+              await query('INSERT INTO pagos_incompletos (id_inquilino, monto, usuario_id, metadata, raw) VALUES (?, ?, ?, ?, ?)', [newInq.id, obj.monto || 0, obj.usuario_id || null, obj.metadata ? JSON.stringify(obj.metadata) : null, obj.raw || null]);
             }
             // borrar la entrada de papelera correspondiente
             await query('DELETE FROM papelera WHERE id = ?', [t.id]);
@@ -666,7 +744,7 @@ app.post('/papelera/:id/restore', async (req, res) => {
 
     if (tipo === 'pago_incompleto') {
       const obj = objeto;
-      await query('INSERT INTO pagos_incompletos (id_inquilino, nombre, cedula, direccion, monto, usuario_id, metadata, raw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [obj.id_inquilino || null, obj.nombre || null, obj.cedula || null, obj.direccion || null, obj.monto || 0, obj.usuario_id || null, obj.metadata ? JSON.stringify(obj.metadata) : null, obj.raw || null]);
+      await query('INSERT INTO pagos_incompletos (id_inquilino, monto, usuario_id, metadata, raw) VALUES (?, ?, ?, ?, ?)', [obj.id_inquilino || null, obj.monto || 0, obj.usuario_id || null, obj.metadata ? JSON.stringify(obj.metadata) : null, obj.raw || null]);
       await query('DELETE FROM papelera WHERE id = ?', [id]);
       return res.json({ restored: true, tipo: 'pago_incompleto' });
     }
@@ -694,33 +772,7 @@ app.delete('/papelera/:id', async (req, res) => {
   }
 });
 
-// DATA_USUARIOS / INFO_USUARIOS (idénticos)
-app.get('/data_usuarios', async (req, res) => {
-  try {
-    const rows = await query('SELECT * FROM data_usuarios ORDER BY USER_ID DESC');
-    res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error leyendo data_usuarios' });
-  }
-});
-
-app.post('/data_usuarios', async (req, res) => {
-  try {
-    const { NOMBRE, APELLIDO, NOMBRE_USUARIO, NUMERO_TELEFONICO, CONTRASEÑA } = req.body;
-    if (!NOMBRE_USUARIO || !CONTRASEÑA) return res.status(400).json({ error: 'NOMBRE_USUARIO y CONTRASEÑA son requeridos' });
-    const result = await query(
-      `INSERT INTO data_usuarios (NOMBRE, APELLIDO, NOMBRE_USUARIO, NUMERO_TELEFONICO, CONTRASEÑA)
-       VALUES (?, ?, ?, ?, ?)`,
-      [NOMBRE || null, APELLIDO || null, NOMBRE_USUARIO, NUMERO_TELEFONICO || null, CONTRASEÑA]
-    );
-    const inserted = await query('SELECT * FROM data_usuarios WHERE USER_ID = ?', [result.insertId]);
-    res.status(201).json(inserted[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error creando data_usuario' });
-  }
-});
+// DATA_USUARIOS / INFO_USUARIOS (usar info_usuarios según esquema)
 
 app.get('/info_usuarios', async (req, res) => {
   try {
@@ -1027,8 +1079,7 @@ async function checkDueNotifications() {
     }
   } catch (e) { console.error('checkDueNotifications error', e); }
 }
-// ejecutar al inicio y cada 10 minutos
-checkDueNotifications().catch(console.error);
+// ejecutar cada 10 minutos (ya se ejecutó al inicio en startServer)
 setInterval(() => checkDueNotifications().catch(console.error), 10 * 60 * 1000);
 
 // health
@@ -1046,7 +1097,13 @@ let server = null;
 async function startServer() {
   try {
     await pool.query('SELECT 1');
-    console.log(`✅ Base de datos conectada (${process.env.DB_NAME || 'gohome_db_new'})`);
+    console.log(`✅ Base de datos conectada (${process.env.DB_NAME || 'railway'})`);
+
+    // Asegurar que las tablas existan
+    await ensureAllTables();
+
+    // Iniciar checker de notificaciones
+    checkDueNotifications().catch(console.error);
   } catch (err) {
     console.error('❌ Error conectando a la base de datos:', err.message || err);
     if (process.env.NODE_ENV === 'production') process.exit(1);
