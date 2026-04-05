@@ -8,18 +8,8 @@ const app = express();
 const path = require("path");
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));// Servir archivos estáticos (CSS, JS, HTML)
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-
-app.use(express.json());
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
 
 
 
@@ -1043,6 +1033,11 @@ setInterval(() => checkDueNotifications().catch(console.error), 10 * 60 * 1000);
 
 // health
 app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime(), timestamp: Date.now() }));
+
+// Servir la aplicación cliente para rutas SPA después de las API
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // ----------------- START SERVER -----------------
 let server = null;

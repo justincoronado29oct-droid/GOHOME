@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: gohome-server
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Agrega los valores de DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT y otros secretos en el dashboard de Render.
