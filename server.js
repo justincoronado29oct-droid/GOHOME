@@ -441,35 +441,73 @@ app.get('/inmuebles', async (req, res) => {
   }
 });
 
+
 app.post('/inmuebles', async (req, res) => {
   try {
-    const { N_casa, direccion, sector, municipio, m_contruccion, m_terreno, descripcion } = req.body;
-    const normalizedN_casa = N_casa == null ? null : String(N_casa).trim();
-    if (!normalizedN_casa || !direccion || !sector || !municipio) {
+
+    const { numero_casa, direccion, sector, municipio, m_contruccion, m_terreno, descripcion } = req.body;
+
+    const normalizedCasa = numero_casa == null ? null : String(numero_casa).trim();
+
+    if (!normalizedCasa || !direccion || !sector || !municipio) {
       return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
+
     const result = await query(
-      `INSERT INTO inmuebles (N_casa, direccion, sector, municipio, m_contruccion, m_terreno, descripcion)
+      `INSERT INTO inmuebles (numero_casa, direccion, sector, municipio, m_contruccion, m_terreno, descripcion)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [normalizedN_casa, direccion, sector, municipio, m_contruccion || null, m_terreno || null, descripcion || null]
+      [
+        normalizedCasa,
+        direccion,
+        sector,
+        municipio,
+        m_contruccion || null,
+        m_terreno || null,
+        descripcion || null
+      ]
     );
-    const inserted = await query('SELECT * FROM inmuebles WHERE id = ?', [result.insertId]);
+
+    const inserted = await query(
+      'SELECT * FROM inmuebles WHERE id = ?',
+      [result.insertId]
+    );
+
     res.status(201).json(inserted[0]);
+
     // notificar por email sobre nuevo inmueble
     setImmediate(() => {
       try {
+
         const im = inserted[0];
-        const subject = `Nuevo inmueble agregado: ${im.N_casa} - ${im.direccion}`;
-        const html = `<p>Se ha agregado un nuevo inmueble: <strong>${im.N_casa}</strong></p><p>Dirección: ${im.direccion}</p>`;
+
+        const subject = `Nuevo inmueble agregado: ${im.numero_casa} - ${im.direccion}`;
+
+        const html = `
+        <p>Se ha agregado un nuevo inmueble:</p>
+        <p><strong>${im.numero_casa}</strong></p>
+        <p>Dirección: ${im.direccion}</p>
+        `;
+
         notifyAllUsers(subject, html, 'created', 'inmueble', im.id, { im });
-      } catch (e) { console.warn('notify new inmueble error', e); }
+
+      } catch (e) {
+        console.warn('notify new inmueble error', e);
+      }
     });
+
   } catch (err) {
+
     console.error(err);
-    if (err && err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'N_casa ya existe' });
+
+    if (err && err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Ese número de casa ya existe' });
+    }
+
     res.status(500).json({ error: 'Error creando inmueble' });
   }
 });
+
+
 
 app.put('/inmuebles/:id', async (req, res) => {
   try {
