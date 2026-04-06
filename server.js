@@ -452,9 +452,35 @@ app.post('/inmuebles', async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
 
+   app.post('/inmuebles', async (req, res) => {
+  try {
+
+    const {
+      numero_casa,
+      N_casa,
+      direccion,
+      sector,
+      municipio,
+      m_contruccion,
+      m_terreno,
+      descripcion
+    } = req.body;
+
+    // aceptar numero_casa o N_casa
+    const casa = numero_casa || N_casa;
+    const normalizedCasa = casa == null ? null : String(casa).trim();
+
+    if (!normalizedCasa || !direccion || !sector || !municipio) {
+      return res.status(400).json({
+        error: 'Faltan campos requeridos',
+        recibido: req.body
+      });
+    }
+
     const result = await query(
-      `INSERT INTO inmuebles (numero_casa, direccion, sector, municipio, m_contruccion, m_terreno, descripcion)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO inmuebles 
+      (numero_casa, direccion, sector, municipio, m_contruccion, m_terreno, descripcion)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         normalizedCasa,
         direccion,
@@ -466,6 +492,23 @@ app.post('/inmuebles', async (req, res) => {
       ]
     );
 
+    const inserted = await query(
+      'SELECT * FROM inmuebles WHERE id = ?',
+      [result.insertId]
+    );
+
+    res.status(201).json(inserted[0]);
+
+  } catch (err) {
+
+    console.error("ERROR CREANDO INMUEBLE:", err);
+
+    res.status(500).json({
+      error: "Error creando inmueble",
+      detalle: err.message
+    });
+  }
+});
     const inserted = await query(
       'SELECT * FROM inmuebles WHERE id = ?',
       [result.insertId]
