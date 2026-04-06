@@ -155,7 +155,7 @@ async function ensureAllTables() {
     // inmuebles
     await query(`CREATE TABLE IF NOT EXISTS inmuebles (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      N_casa INT NOT NULL UNIQUE,
+      N_casa VARCHAR(100) NOT NULL UNIQUE,
       direccion VARCHAR(300) NOT NULL,
       sector VARCHAR(200) NOT NULL,
       municipio VARCHAR(200) NOT NULL,
@@ -178,7 +178,7 @@ async function ensureAllTables() {
       descripcion TEXT,
       pago DECIMAL(12,2) DEFAULT NULL,
       fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
-      N_casa INT,
+      N_casa VARCHAR(100),
       direccion VARCHAR(300),
       FOREIGN KEY (N_casa) REFERENCES inmuebles(N_casa) ON DELETE SET NULL,
       INDEX idx_nombre (nombre),
@@ -232,7 +232,9 @@ async function ensureAllTables() {
 // --- UTIL: obtener direccion de inmueble por N_casa ---
 async function getInmuebleByNCasa(N_casa) {
   if (N_casa == null) return null;
-  const rows = await query('SELECT * FROM inmuebles WHERE N_casa = ? LIMIT 1', [safeInt(N_casa)]);
+  const normalized = String(N_casa).trim();
+  if (!normalized) return null;
+  const rows = await query('SELECT * FROM inmuebles WHERE N_casa = ? LIMIT 1', [normalized]);
   return rows[0] || null;
 }
 
@@ -308,6 +310,7 @@ app.post('/inquilinos', async (req, res) => {
     // Si no hay direccion determinada aún, exigirla
     if (!direccion) return res.status(400).json({ error: 'Direccion requerida (o pasa N_casa de un inmueble existente)' });
 
+    const nCasaValue = N_casa == null ? null : String(N_casa).trim();
     const result = await query(
       `INSERT INTO inquilinos (nombre, cedula, telefono, direccion, fecha_ospedaje, ingreso_mensual, descripcion, pago, N_casa)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -320,7 +323,7 @@ app.post('/inquilinos', async (req, res) => {
         safeFloat(ingreso_mensual, 0),
         descripcion || null,
         pago == null ? null : safeFloat(pago, null),
-        N_casa == null ? null : safeInt(N_casa, null)
+        nCasaValue === '' ? null : nCasaValue
       ]
     );
 
@@ -357,7 +360,7 @@ app.put('/inquilinos/:id', async (req, res) => {
       if (!inmueble) return res.status(400).json({ error: `No existe inmuebles con N_casa = ${fields.N_casa}` });
       // usar direccion del inmueble
       fields.direccion = inmueble.direccion;
-      fields.N_casa = safeInt(fields.N_casa, null);
+      fields.N_casa = String(fields.N_casa).trim();
     }
 
     if (fields.ingreso_mensual !== undefined) fields.ingreso_mensual = safeFloat(fields.ingreso_mensual, null);
@@ -441,13 +444,14 @@ app.get('/inmuebles', async (req, res) => {
 app.post('/inmuebles', async (req, res) => {
   try {
     const { N_casa, direccion, sector, municipio, m_contruccion, m_terreno, descripcion } = req.body;
-    if (N_casa == null || !direccion || !sector || !municipio) {
+    const normalizedN_casa = N_casa == null ? null : String(N_casa).trim();
+    if (!normalizedN_casa || !direccion || !sector || !municipio) {
       return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
     const result = await query(
       `INSERT INTO inmuebles (N_casa, direccion, sector, municipio, m_contruccion, m_terreno, descripcion)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [safeInt(N_casa, null), direccion, sector, municipio, m_contruccion || null, m_terreno || null, descripcion || null]
+      [normalizedN_casa, direccion, sector, municipio, m_contruccion || null, m_terreno || null, descripcion || null]
     );
     const inserted = await query('SELECT * FROM inmuebles WHERE id = ?', [result.insertId]);
     res.status(201).json(inserted[0]);
@@ -473,7 +477,7 @@ app.put('/inmuebles/:id', async (req, res) => {
     const fields = req.body;
     const keys = Object.keys(fields);
     if (keys.length === 0) return res.status(400).json({ error: 'No hay campos para actualizar' });
-    if (fields.N_casa !== undefined) fields.N_casa = safeInt(fields.N_casa, null);
+    if (fields.N_casa !== undefined) fields.N_casa = String(fields.N_casa).trim();
     const set = keys.map(k => `${k} = ?`).join(', ');
     const params = keys.map(k => fields[k]);
     params.push(id);
