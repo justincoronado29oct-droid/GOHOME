@@ -446,6 +446,8 @@ app.post('/inmuebles', async (req, res) => {
 
     const normalizedCasa = numero_casa == null ? null : String(numero_casa).trim();
 
+    console.log(req.body);
+    
     if (!normalizedCasa || !direccion || !sector || !municipio) {
       return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
