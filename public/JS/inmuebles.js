@@ -423,14 +423,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Intentar crear en servidor primero
     let serverResp = null;
     try {
-      const res = await enviarAlServidor({ url: API_BASE, method: 'POST', body: _mapInmuebleClientToServer(nuevoInmueble), okStatus: [200, 201] });
-      if (res.ok && res.data) {
-        serverResp = Array.isArray(res.data) ? res.data[0] : res.data;
-        // Usar el id del servidor
-        nuevoInmueble.id = serverResp.id;
-      } else {
-        throw new Error('Respuesta del servidor inválida');
-      }
+     const res = await enviarAlServidor({
+  url: API_BASE,
+  method: 'POST',
+  body: _mapInmuebleClientToServer(nuevoInmueble),
+  okStatus: [200, 201]
+});
+
+if (!res.ok) {
+  console.error("Error del servidor:", res);
+  throw new Error(res.data?.error || "Error del servidor");
+}
+console.log("Datos enviados al servidor:", nuevoInmueble);
+
+
+serverResp = Array.isArray(res.data) ? res.data[0] : res.data;
     } catch (err) {
       console.warn('⚠️ No se pudo guardar en el servidor:', err);
       Swal.fire('Error', 'No se pudo guardar el inmueble en la base de datos. Verifica la conexión al servidor.', 'error');
