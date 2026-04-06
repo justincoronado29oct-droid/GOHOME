@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Nota: aquí solo preservamos el campo; la lógica de servidor decide nombre real
     if (mapped.m_contruccion !== undefined) {
-      mapped.m_construccion = mapped.m_contruccion;
+      mapped.m_contruccion = mapped.m_contruccion;
       delete mapped.m_contruccion; // eliminar typo si estaba
     }
 
