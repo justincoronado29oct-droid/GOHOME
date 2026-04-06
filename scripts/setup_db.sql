@@ -4,8 +4,8 @@
 -- ============================================
 
 -- Crear la base de datos
-CREATE DATABASE IF NOT EXISTS gohome_db;
-USE gohome_db;
+CREATE DATABASE IF NOT EXISTS railway;
+USE railway;
 
 -- ============================================
 -- TABLA: inmuebles
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS inquilinos (
   ingreso_mensual DECIMAL(12,2) NOT NULL,
   descripcion TEXT,
   pago DECIMAL(12,2) DEFAULT NULL,
-  fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+  fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,	
   N_casa INT,
   direccion VARCHAR(300),
   FOREIGN KEY (N_casa) REFERENCES inmuebles(N_casa) ON DELETE SET NULL,
@@ -132,3 +132,6 @@ CREATE TABLE IF NOT EXISTS notification_history (
 SELECT 'Base de datos gohome_db creada correctamente' AS Status;
 SELECT COUNT(*) as total_tables FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'gohome_db';
 SHOW TABLES;
+select * from inmuebles;
+ALTER TABLE inmuebles
+ADD COLUMN numero_casa VARCHAR(20) NOT NULL;
