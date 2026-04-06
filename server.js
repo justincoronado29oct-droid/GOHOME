@@ -238,9 +238,6 @@ async function getInmuebleByNCasa(N_casa) {
   return rows[0] || null;
 }
 
-app.get("/manifest.json", (req, res) => {
-  res.sendFile(path.join(__dirname, "HTML", "manifest.json"));
-});
 
 
 // INQUILINOS
