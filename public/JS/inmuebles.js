@@ -30,6 +30,55 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputDescripcion = document.getElementById('descript_inmuebles');
   const contenedorInmuebles = document.querySelector('.box_container_inmuebles');
 
+  const formInmuebles = document.querySelector('.ingresoInmu');
+  const inmuebleSteps = formInmuebles ? Array.from(formInmuebles.querySelectorAll('.form-step')) : [];
+  const inmuebleStepperItems = formInmuebles ? Array.from(formInmuebles.querySelectorAll('.stepper__item')) : [];
+  const inmueblePrev = formInmuebles ? formInmuebles.querySelector('.btn-step-prev') : null;
+  const inmuebleNext = formInmuebles ? formInmuebles.querySelector('.btn-step-next') : null;
+  const inmuebleSubmit = formInmuebles ? formInmuebles.querySelector('.btn-step-submit') : null;
+  let inmuebleCurrentStep = 1;
+
+  const updateInmuebleStep = (step) => {
+    inmuebleCurrentStep = Math.max(1, Math.min(step, inmuebleSteps.length));
+    inmuebleSteps.forEach((panel) => {
+      panel.classList.toggle('form-step--active', Number(panel.dataset.step) === inmuebleCurrentStep);
+    });
+    inmuebleStepperItems.forEach((item) => {
+      const stepIndex = Number(item.dataset.step);
+      item.classList.toggle('stepper__item--active', stepIndex === inmuebleCurrentStep);
+      item.classList.toggle('stepper__item--done', stepIndex < inmuebleCurrentStep);
+    });
+    if (inmueblePrev) inmueblePrev.disabled = inmuebleCurrentStep === 1;
+    if (inmuebleNext) inmuebleNext.classList.toggle('hidden', inmuebleCurrentStep === inmuebleSteps.length);
+    if (inmuebleSubmit) inmuebleSubmit.classList.toggle('hidden', inmuebleCurrentStep !== inmuebleSteps.length);
+  };
+
+  const validateInmuebleStep = () => {
+    const stepPanel = inmuebleSteps.find(panel => Number(panel.dataset.step) === inmuebleCurrentStep);
+    if (!stepPanel) return true;
+    const fields = Array.from(stepPanel.querySelectorAll('input, textarea'));
+    for (const field of fields) {
+      if (!field.checkValidity()) {
+        field.reportValidity();
+        return false;
+      }
+    }
+    return true;
+  };
+
+  if (inmueblePrev) {
+    inmueblePrev.addEventListener('click', () => updateInmuebleStep(inmuebleCurrentStep - 1));
+  }
+  if (inmuebleNext) {
+    inmuebleNext.addEventListener('click', () => {
+      if (!validateInmuebleStep()) return;
+      updateInmuebleStep(inmuebleCurrentStep + 1);
+    });
+  }
+  if (formInmuebles) {
+    updateInmuebleStep(inmuebleCurrentStep);
+  }
+
   const API_BASE = (window.API_BASE || '') + '/inmuebles';
 
   // -----------------------------

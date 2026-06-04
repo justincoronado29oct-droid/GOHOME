@@ -55,6 +55,7 @@
           <div class="row"><div class="label">Dirección</div><div class="value">${escapeHtml(inquilino.direccion || '')}</div></div>
           <div class="row"><div class="label">Descripción</div><div class="value">${escapeHtml(inquilino.descripcion || '')}</div></div>
           <div class="row"><div class="label">Monto mensual</div><div class="value">$${formatCurrency(inquilino.ingreso_mensual || 0)}</div></div>
+          <div class="row"><div class="label">Día de pago</div><div class="value">${escapeHtml(inquilino.fecha_pago != null ? String(inquilino.fecha_pago) : 'No programado')}</div></div>
 
           <div class="amount ${pagoCompleto ? 'complete' : 'incomplete'}">$${formatCurrency(pago)}</div>
 

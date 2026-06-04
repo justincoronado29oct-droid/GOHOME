@@ -98,8 +98,7 @@
     item._pagoConfirmado = true;
 
     boxEl.dataset.status = 'AL_DIA';
-    boxEl.style.borderLeftColor = '#10b981';
-    boxEl.style.backgroundColor = '';
+    boxEl.classList.remove('status-pendiente', 'status-incompleto');
 
     const panelPendiente = boxEl.querySelector('.status-pendiente');
     if (panelPendiente) panelPendiente.remove();
@@ -107,84 +106,69 @@
     const panelIncompleto = boxEl.querySelector('.status-incompleto');
     if (panelIncompleto) panelIncompleto.remove();
 
-    const timer = boxEl.querySelector('.timer');
-    if (timer) timer.style.color = '';
+    // timer removed: no per-box timer UI
+  }
+
+  function markDueToday(box, isToday) {
+    box.classList.toggle('due-today', !!isToday);
+    const dueTag = box.querySelector('.due-tag');
+    if (dueTag) {
+      const fecha = box.dataset.fecha_pago;
+      dueTag.textContent = isToday ? 'Hoy es día de pago' : (fecha ? `Programado día ${fecha}` : 'Sin fecha de pago');
+    }
   }
 
   function aplicarPendienteUI(box, calc, overdueMs) {
     box.dataset.status = 'PENDIENTE';
-    box.style.borderLeftColor = '#dc2626';
-    box.style.backgroundColor = '#fff1f2';
+    box.classList.add('status-pendiente');
+    box.classList.remove('status-incompleto');
 
-    const timer = box.querySelector('.timer');
-    if (timer) {
-      timer.textContent = formatTime(overdueMs);
-      timer.style.color = '#b91c1c';
-    }
+    // timer removed: omit per-box timer updates
 
     let panel = box.querySelector('.status-pendiente');
     if (!panel) {
       panel = document.createElement('div');
-      panel.className = 'status-pendiente';
-      panel.style.cssText = `
-        margin-top:12px;
-        padding:12px;
-        border-radius:10px;
-        background:#fef2f2;
-        border:1px solid #fecaca;
-        font-size:0.9rem;
-      `;
+      panel.className = 'status-panel status-panel--pending status-pendiente';
       box.appendChild(panel);
     }
 
     panel.innerHTML = `
-      <div style="font-weight:800; color:#991b1b; margin-bottom:6px;">
-        ⛔ ESTATUS: PENDIENTE (${calc.mesesVencidos} mes${calc.mesesVencidos !== 1 ? 'es' : ''})
+      <div class="panel-title">
+        <span>⛔ ESTATUS: PENDIENTE (${calc.mesesVencidos} mes${calc.mesesVencidos !== 1 ? 'es' : ''})</span>
+        <span class="badge badge--danger">${formatTime(overdueMs)}</span>
       </div>
-      <div>💰 Deuda por meses: <strong>$${money(calc.deudaPorMeses)}</strong> (${calc.mesesVencidos} mes${calc.mesesVencidos !== 1 ? 'es' : ''})</div>
+      <div class="panel-note">La deuda se está acumulando hasta que se reciba el pago completo.</div>
+      <div>💰 Deuda por meses: <strong>$${money(calc.deudaPorMeses)}</strong></div>
       <div>📈 Interés acumulado: <strong>$${money(calc.interes)}</strong> (5% diario)</div>
-      <div style="margin-top:6px; font-weight:900; color:#7f1d1d;">
-        TOTAL A PAGAR: $${money(calc.total)}
-      </div>
+      <div style="margin-top:0.75rem; font-weight:900; color:#7f1d1d;">TOTAL A PAGAR: $${money(calc.total)}</div>
     `;
   }
 
   function aplicarIncompletoUI(box, info, overdueMs) {
     box.dataset.status = 'INCOMPLETO';
-    box.style.borderLeftColor = '#facc15';
-    box.style.backgroundColor = '#fff7cc';
+    box.classList.add('status-incompleto');
+    box.classList.remove('status-pendiente');
 
-    const timer = box.querySelector('.timer');
-    if (timer) {
-      timer.textContent = formatTime(overdueMs);
-      timer.style.color = '#b45309';
-    }
+    // timer removed: omit per-box timer updates
 
     let panel = box.querySelector('.status-incompleto');
     if (!panel) {
       panel = document.createElement('div');
-      panel.className = 'status-incompleto';
-      panel.style.cssText = `
-        margin-top:12px;
-        padding:12px;
-        border-radius:10px;
-        background:#fefce8;
-        border:1px solid #fcd34d;
-        font-size:0.9rem;
-      `;
+      panel.className = 'status-panel status-panel--incomplete status-incompleto';
       box.appendChild(panel);
     }
 
     panel.innerHTML = `
-      <div style="font-weight:800; color:#92400e; margin-bottom:6px;">
-        ⚠️ ESTATUS: INCOMPLETO (${info.mesesVencidos} mes${info.mesesVencidos !== 1 ? 'es' : ''})
+      <div class="panel-title">
+        <span>⚠️ ESTATUS: INCOMPLETO (${info.mesesVencidos} mes${info.mesesVencidos !== 1 ? 'es' : ''})</span>
+        <span class="badge badge--warning">${formatTime(overdueMs)}</span>
       </div>
-      <div>💰 Deuda por meses: <strong>$${money(info.deudaPorMeses)}</strong> (${info.mesesVencidos} mes${info.mesesVencidos !== 1 ? 'es' : ''})</div>
+      <div class="panel-note">Se recibió un pago parcial y ahora se calcula la deuda restante con interés diario.</div>
+      <div>💰 Deuda por meses: <strong>$${money(info.deudaPorMeses)}</strong></div>
       <div>💰 Pagado: <strong>$${money(info.pagado)}</strong></div>
       <div>💰 Falta por pagar: <strong style="color:#b45309;">$${money(info.falta)}</strong></div>
       <div>📈 Interés acumulado: <strong>$${money(info.interes)}</strong> (5% diario)</div>
-      <div style="margin-top:6px; font-weight:900; color:#78350f;">
-        TOTAL A PAGAR: $${money(info.total)}</div>
+      <div style="margin-top:0.75rem; font-weight:900; color:#78350f;">TOTAL A PAGAR: $${money(info.total)}</div>
     `;
   }
 
@@ -282,29 +266,56 @@
     boxes.forEach(item => {
       // Generar recibo automático en el día de pago programado (1-31)
       const fp = Number(item.fecha_pago);
-      if (fp && Number.isInteger(fp) && fp >= 1 && fp <= 31 && fp === todayDay) {
-        if (item._lastReciboFecha !== todayIso) {
-          item._lastReciboFecha = todayIso;
-          dirty = true;
-          if (window.receipts && typeof window.receipts.generateReceipt === 'function') {
-            window.receipts.generateReceipt(item, { fecha: new Date().toISOString(), monto: Number(item.ingreso_mensual || 0), concepto: 'Recibo programado' })
-              .then(() => {
-                if (window.Swal) {
-                  Swal.fire({ icon:'success', title:'Recibo generado', text:`Recibo automático generado para el día ${String(fp).padStart(2, '0')}.`, timer: 1500, showConfirmButton: false });
-                }
-              })
-              .catch(e => console.warn('Error generando recibo automático:', e));
+    const isFechaPagoValid = fp && Number.isInteger(fp) && fp >= 1 && fp <= 31;
+    const isDueToday = isFechaPagoValid && fp === todayDay;
+
+    if (isDueToday && item._lastReciboFecha !== todayIso) {
+      item._lastReciboFecha = todayIso;
+      dirty = true;
+      if (window.receipts && typeof window.receipts.generateReceipt === 'function') {
+        try {
+          const ingreso = Number(item.ingreso_mensual || 0);
+          const pagado = Number(item.montoPagado || 0);
+          let monto = 0;
+          let concepto = 'Pago faltante';
+
+          if (pagado >= ingreso && ingreso > 0) {
+            monto = pagado;
+            concepto = 'Pago completo';
+          } else if (pagado > 0 && pagado < ingreso) {
+            monto = pagado;
+            concepto = 'Pago incompleto';
+          } else {
+            monto = 0;
+            concepto = 'Pago faltante';
           }
-        }
+
+          window.receipts.generateReceipt(item, { fecha: new Date().toISOString(), monto: monto, concepto: concepto })
+            .then(() => {
+              if (window.Swal) {
+                Swal.fire({ toast: true, position: 'top-end', icon:'success', title:'Recibo generado', text:`${concepto} generado para el día ${String(fp).padStart(2, '0')}.`, timer: 1500, showConfirmButton: false });
+              }
+            })
+            .catch(e => console.warn('Error generando recibo automático:', e));
+        } catch (e) { console.warn('Error al preparar recibo automático', e); }
       }
+    }
 
-      if (!item.endTime) return;
+    const boxEl = document.querySelector(
+      `.inquilino-box[data-id="${item.id}"]`
+    );
+    if (!boxEl) return;
 
-      const boxEl = document.querySelector(
-        `.inquilino-box[data-id="${item.id}"]`
-      );
-      if (!boxEl) return;
+    markDueToday(boxEl, isDueToday);
+    if (isDueToday && item.status && item.status !== 'AL_DIA' && item._lastNotifiedFecha !== todayIso) {
+      item._lastNotifiedFecha = todayIso;
+      dirty = true;
+      if (window.Swal) {
+        Swal.fire({ toast: true, position: 'top-end', icon:'warning', title:'Pago vence hoy', text:`Revisa el inquilino ${item.nombre} y genera el recibo si no se ha pagado.`, timer: 2500, showConfirmButton: false });
+      }
+    }
 
+    if (!item.endTime) return;
       // ✅ AL DÍA / PAGO RECIÉN APLICADO
       if (now <= item.endTime) {
         if ((item.status === 'PENDIENTE' || item.status === 'INCOMPLETO') && !item._pagoConfirmado) {

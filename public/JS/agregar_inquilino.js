@@ -29,6 +29,57 @@
   const boxesContainer = document.querySelector('.box_container');
   if (!boxesContainer) { console.error('No se encontró .box_container'); return; }
 
+  const formSteps = form ? Array.from(form.querySelectorAll('.form-step')) : [];
+  const stepperItems = form ? Array.from(form.querySelectorAll('.stepper__item')) : [];
+  const btnPrev = form ? form.querySelector('.btn-step-prev') : null;
+  const btnNext = form ? form.querySelector('.btn-step-next') : null;
+  const btnSubmit = form ? form.querySelector('.btn-step-submit') : null;
+  let currentStep = 1;
+
+  const updateFormStep = (step) => {
+    currentStep = Math.max(1, Math.min(step, formSteps.length));
+    formSteps.forEach((panel) => {
+      const isActive = Number(panel.dataset.step) === currentStep;
+      panel.classList.toggle('form-step--active', isActive);
+    });
+    stepperItems.forEach((item) => {
+      const stepIndex = Number(item.dataset.step);
+      item.classList.toggle('stepper__item--active', stepIndex === currentStep);
+      item.classList.toggle('stepper__item--done', stepIndex < currentStep);
+    });
+    if (btnPrev) btnPrev.disabled = currentStep === 1;
+    if (btnNext) btnNext.classList.toggle('hidden', currentStep === formSteps.length);
+    if (btnSubmit) btnSubmit.classList.toggle('hidden', currentStep !== formSteps.length);
+  };
+
+  const validateCurrentStep = () => {
+    const stepPanel = formSteps.find(panel => Number(panel.dataset.step) === currentStep);
+    if (!stepPanel) return true;
+    const fields = Array.from(stepPanel.querySelectorAll('input, textarea'));
+    for (const field of fields) {
+      if (!field.checkValidity()) {
+        field.reportValidity();
+        return false;
+      }
+    }
+    return true;
+  };
+
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => {
+      updateFormStep(currentStep - 1);
+    });
+  }
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      if (!validateCurrentStep()) return;
+      updateFormStep(currentStep + 1);
+    });
+  }
+  if (form) {
+    updateFormStep(currentStep);
+  }
+
   // ---------------- helpers storage / servidor ----------------
   function readBoxesStorage() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { return []; }
@@ -413,6 +464,7 @@
     const box = document.createElement('div');
     box.className = 'inquilino-box';
     box.dataset.id = item.id;
+    box.dataset.status = 'AL_DIA';
 
     box.dataset.nombre = (item.nombre || '').toString();
     box.dataset.cedula = (item.cedula || '').toString();
@@ -423,48 +475,29 @@
     box.dataset.ingreso_mensual = item.ingreso_mensual != null ? String(item.ingreso_mensual) : '';
     box.dataset.fecha_pago = item.fecha_pago != null ? String(item.fecha_pago) : '';
 
-    Object.assign(box.style, {
-      position: 'relative',
-      padding: '18px',
-      borderRadius: '12px',
-      boxShadow: '0 6px 18px rgba(0,0,0,0.06)',
-      background: '#ffffff',
-      marginBottom: '18px',
-      border: '1px solid #e5e7eb',
-      borderLeft: '8px solid #10b981',
-      transition: 'all 0.18s ease-in-out',
-      cursor: 'pointer',
-      overflow: 'hidden',
-      minWidth: '380px',
-      maxWidth: '720px',
-      width: 'calc(100% - 20px)'
-    });
-
-    box.onmouseenter = () => { box.style.transform = 'translateY(-3px)'; box.style.boxShadow = '0 10px 30px rgba(0,0,0,0.08)'; };
-    box.onmouseleave = () => { box.style.transform = 'translateY(0)'; box.style.boxShadow = '0 6px 18px rgba(0,0,0,0.06)'; };
-
     box.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:8px;">
-        <div style="flex:1; min-width:0;">
-          <div class="name" style="font-weight:800; font-size:1.25rem; color:#0f172a; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.nombre)}</div>
-          <div class="meta" style="font-size:0.85rem; color:#6b7280; margin-top:6px;">
-            <span style="display:inline-block; vertical-align:middle; margin-right:6px;">🏠</span> ${escapeHtml(item.N_casa || 'N/A')}
-            <span style="display:inline-block; vertical-align:middle; margin-left:12px; margin-right:4px;">�</span> Fecha de pago: ${item.fecha_pago != null ? String(item.fecha_pago) : 'N/A'}
-            <span style="display:inline-block; vertical-align:middle; margin-left:12px; margin-right:4px;">🗓️</span> ${new Date(item.fecha_registro).toLocaleDateString()}
+      <div class="box-header">
+        <div class="box-title-group">
+          <div class="name">${escapeHtml(item.nombre)}</div>
+          <div class="meta">
+            <span class="badge badge--info">🏠 ${escapeHtml(item.N_casa || 'N/A')}</span>
+            <span class="badge badge--info">📅 Día ${item.fecha_pago != null ? String(item.fecha_pago) : 'N/A'}</span>
+            <span class="badge badge--info">Alta ${new Date(item.fecha_registro).toLocaleDateString()}</span>
           </div>
         </div>
-
-        <div style="display:flex; gap:8px; align-items:flex-start;">
-          <button class="btn-edit-inquilino" title="Editar" style="background-color:#ffffff; border:1px solid #9ca3af; color:#374151; padding:8px; border-radius:8px; cursor:pointer; font-weight:700; margin-left:-60px; margin-top:-10px;">✎</button>
-          <button class="btn-remove-inquilino" title="Eliminar" style="background:transparent; border:1px solid #fca5a5; color:#b91c1c; padding:8px; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
+        <div class="box-actions">
+          <button class="btn-edit-inquilino" title="Editar">✎</button>
+          <button class="btn-remove-inquilino" title="Eliminar">✕</button>
         </div>
       </div>
 
-      <div class="timer-container" style="margin-top:12px; background-color:#f0fdf4; border-radius:8px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; border:1px dashed #a7f3d0;">
-         <div style="display:flex; align-items:center; gap:10px;">
-           <span style="font-weight:800; font-size:0.78rem; color:#065f46;">⏱</span>
-         </div>
-         <div class="timer" style="font-weight:900; font-size:1.3rem; color:#059669; font-variant-numeric: tabular-nums;">--:--</div>
+      <div class="timer-container">
+        <div class="timer-label"><span>⏱</span> <span>Tiempo restante</span></div>
+        <div class="timer">--:--</div>
+      </div>
+
+      <div class="box-footnote">
+        <span class="badge badge--info due-tag">${item.fecha_pago != null ? `Programado día ${String(item.fecha_pago)}` : 'Sin fecha de pago'}</span>
       </div>
     `;
 
@@ -491,7 +524,7 @@
     box.querySelector('.btn-edit-inquilino').addEventListener('click', (ev) => { ev.stopPropagation(); openEditModal(item); });
     box.addEventListener('click', (e) => { e.stopPropagation(); openDetailModal(item); });
 
-    startBoxTimer(box, item);
+    // cronómetro eliminado
   }
 
   function updateBoxDom(item) {
@@ -499,7 +532,15 @@
     if (!box) { createBox(item); return; }
     const nameEl = box.querySelector('.name'); if (nameEl) nameEl.textContent = item.nombre;
     const metaEl = box.querySelector('.meta');
-    if (metaEl) metaEl.innerHTML = `<span style="display:inline-block; vertical-align:middle; margin-right:6px;">🏠</span> ${escapeHtml(item.N_casa || 'N/A')} <span style="display:inline-block; vertical-align:middle; margin-left:12px; margin-right:4px;">📅</span> ${new Date(item.fecha_registro).toLocaleDateString()}`;
+    if (metaEl) metaEl.innerHTML = `
+      <span class="badge badge--info">🏠 ${escapeHtml(item.N_casa || 'N/A')}</span>
+      <span class="badge badge--info">Alta ${new Date(item.fecha_registro).toLocaleDateString()}</span>
+    `;
+
+    const dueTag = box.querySelector('.due-tag');
+    if (dueTag) {
+      dueTag.textContent = item.fecha_pago != null ? `Programado día ${String(item.fecha_pago)}` : 'Sin fecha de pago';
+    }
 
     box.dataset.nombre = item.nombre || '';
     box.dataset.cedula = item.cedula || '';
@@ -508,8 +549,9 @@
     box.dataset.telefono = item.telefono || '';
     box.dataset.descripcion = item.descripcion || '';
     box.dataset.ingreso_mensual = item.ingreso_mensual != null ? String(item.ingreso_mensual) : '';
+    box.dataset.fecha_pago = item.fecha_pago != null ? String(item.fecha_pago) : '';
 
-    startBoxTimer(box, item);
+    // cronómetro eliminado
   }
 
   // ---------------- eliminar ----------------
@@ -636,73 +678,7 @@
     console.log('Navegador online: procesando cola de eliminaciones...');
     processDeleteQueue();
   });
-function formatMsToDHMS(ms) {
-  // Compacto: muestra días, horas, minutos y segundos (según corresponda) en formato corto: d,h,m,s
-  if (!isFinite(ms) || ms <= 0) return '0s';
-  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (days >= 1) return `${days}d ${String(hours).padStart(2,'0')}h ${String(minutes).padStart(2,'0')}m ${String(seconds).padStart(2,'0')}s`;
-  if (hours >= 1) return `${String(hours).padStart(2,'0')}h ${String(minutes).padStart(2,'0')}m ${String(seconds).padStart(2,'0')}s`;
-  if (minutes >= 1) return `${String(minutes).padStart(2,'0')}m ${String(seconds).padStart(2,'0')}s`;
-  return `${String(seconds).padStart(2,'0')}s`;
-}
-
-  // ---------------- timer UI ----------------
-  function startBoxTimer(boxEl, item) {
-    if (!boxEl) return;
-    if (boxEl._interval) { clearInterval(boxEl._interval); boxEl._interval = null; }
-    const timerEl = boxEl.querySelector('.timer');
-    const timerContainerEl = boxEl.querySelector('.timer-container');
-    if (!timerEl || !timerContainerEl) return;
-
-   function render(msLeft) {
-  if (!isFinite(msLeft)) msLeft = 0;
-  const isExpired = msLeft <= 0;
-  const isRedZone = msLeft > 0 && msLeft <= RED_ZONE_MS;
-
-  if (isExpired) {
-    timerEl.textContent = '¡VENCIDO!';
-    timerEl.style.color = '#ef4444';
-    timerContainerEl.style.backgroundColor = '#fef2f2';
-    timerContainerEl.style.borderColor = '#fecaca';
-  } 
-  else if (isRedZone) {
-    timerEl.textContent = formatMsToDHMS(msLeft);
-    timerEl.style.color = '#dc2626';
-    timerContainerEl.style.backgroundColor = '#fff7ed';
-    timerContainerEl.style.borderColor = '#fed7aa';
-  } 
-  else {
-    timerEl.textContent = formatMsToDHMS(msLeft);
-    timerEl.style.color = '#059669';
-    timerContainerEl.style.backgroundColor = '#f0fdf4';
-    timerContainerEl.style.borderColor = '#a7f3d0';
-  }
-
-  boxEl.style.borderLeftColor = (isExpired || isRedZone) ? '#ef4444' : '#10b981';
-}
-
-
-    // Normalizar endTime: asegurar que sea número válido y guardarlo si faltaba o estaba inválido
-    let end = Number(item.endTime);
-    if (!isFinite(end) || end <= 0) {
-      end = Date.now() + DURATION_MS;
-      item.endTime = end;
-      try { const arr = readBoxesStorage(); const idx = arr.findIndex(x => String(x.id) === String(item.id)); if (idx !== -1) { arr[idx] = { ...arr[idx], endTime: item.endTime }; writeBoxesStorage(arr); } } catch(e) { console.warn('Failed to persist endTime normalization', e); }
-    }
-
-    render(item.endTime - Date.now());
-
-    boxEl._interval = setInterval(() => {
-      const rem = Number(item.endTime) - Date.now();
-      if (!isFinite(rem) || rem <= 0) { render(0); clearInterval(boxEl._interval); boxEl._interval = null; return; }
-      render(rem);
-    }, 250);
-  }
+// Timer removed: UI no longer shows per-inquilino cronómetro.
 
   // ---------------- modal generar pago (igual) ----------------
   async function openPaymentModal(item) {
@@ -1271,22 +1247,7 @@ function formatMsToDHMS(ms) {
         if (fix) { item.endTime = Date.now() + DURATION_MS; changed = true; }
       }
 
-      // Check timer element
-      const timerEl = box.querySelector('.timer');
-      if (!timerEl) {
-        findings.push({ id, type: 'MISSING_TIMER', message: 'Falta elemento .timer en la caja', box });
-        // can't really fix DOM structure here
-      } else {
-        // Check for NaN or empty text
-        const txt = timerEl.textContent || '';
-        if (/NaN|undefined/.test(txt) || txt.trim() === '') {
-          findings.push({ id, type: 'INVALID_TIMER_TEXT', message: `Texto de timer inválido: "${txt}"`, box, timer: timerEl });
-          if (fix) {
-            startBoxTimer(box, item);
-            changed = true;
-          }
-        }
-      }
+      // Timer removed: no longer validate .timer element or intervals
 
       // Check panels duplication
       const pend = box.querySelectorAll('.status-pendiente');
@@ -1316,12 +1277,7 @@ function formatMsToDHMS(ms) {
         if (fix) { box.dataset.status = expectedStatus; changed = true; }
       }
 
-      // Check interval presence for running timers
-      const isExpired = Date.now() > (Number(item.endTime) || 0);
-      if (!isExpired && !box._interval) {
-        findings.push({ id, type: 'MISSING_INTERVAL', message: 'Faltó intervalo de actualización en la caja (box._interval)', box });
-        if (fix) { startBoxTimer(box, item); changed = true; }
-      }
+      // Timer removed: no interval validation required
     });
 
     if (fix && changed) {

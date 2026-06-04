@@ -118,23 +118,25 @@
     }
     toggleBtn.setAttribute('role', 'button');
 
-    const COLLAPSED_CLASS = 'collapsed';
+    const OPEN_CLASS = 'open';
 
-    function isCollapsed() { return sidebar.classList.contains(COLLAPSED_CLASS); }
+    function isOpen() { return sidebar.classList.contains(OPEN_CLASS); }
     function setAria(open) { toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
 
     function showSidebar() {
-      sidebar.classList.remove(COLLAPSED_CLASS);
+      sidebar.classList.add(OPEN_CLASS);
+      document.body.classList.add('sidebar-open');
       icon.className = 'bx bx-chevron-left';
       setAria(true);
     }
     function hideSidebar() {
-      sidebar.classList.add(COLLAPSED_CLASS);
+      sidebar.classList.remove(OPEN_CLASS);
+      document.body.classList.remove('sidebar-open');
       icon.className = 'bx bx-chevron-right';
       setAria(false);
     }
     function toggleSidebar() {
-      if (isCollapsed()) showSidebar(); else hideSidebar();
+      if (isOpen()) hideSidebar(); else showSidebar();
     }
 
     // Exponer API mínima por si otros scripts la usan
@@ -142,7 +144,7 @@
       show: showSidebar,
       hide: hideSidebar,
       toggle: toggleSidebar,
-      isCollapsed
+      isOpen
     };
 
     // click del botón
@@ -153,7 +155,7 @@
 
     // atajos de teclado: Esc cierra, Ctrl+B alterna
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !isCollapsed()) {
+      if (e.key === 'Escape' && isOpen()) {
         hideSidebar();
       }
       if (e.ctrlKey && (e.key === 'b' || e.key === 'B')) {
@@ -163,7 +165,7 @@
     });
 
     // iniciar aria según estado actual
-    setAria(!isCollapsed());
+    setAria(isOpen());
   };
 
   const initFromHash = () => {

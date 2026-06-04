@@ -1,20 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOHOME</title>
-    <link rel="stylesheet" href="/CSS/styles.css">
-    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
-    <link rel="icon" type="image/png" href="img/casa-silueta-negra-sin-puerta.png">
-     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GOHOME</title>
+<link rel="stylesheet" href="/GOHOME/public/CSS/styles.css">
+<link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+<link rel="icon" type="image/png" href="/GOHOME/public/img/casa-silueta-negra-sin-puerta.png">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,10OTH" rel="stylesheet">
 <meta name="theme-color" content="#2c3e50">
-
 <!-- html2canvas y jsPDF (CDN) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -25,7 +24,6 @@
   <aside class="sidebar" id="sidebar">
     <button class="sidebar-toggle" id="toggleBtn"><i class='bx bx-chevron-right'></i></button>
     <div>
-      
       <ul class="side_list">
         <!-- Perfil del usuario integrado como lista -->
         <li id="userProfile" class="side_profile_li" aria-live="polite">
@@ -37,11 +35,15 @@
         <li><a href="#inquilinosCrudd" id="inquilinos"><i class='bxr  bxs-user-square'></i> <span>Inquilinos</span></a></li>
         <li><a href="#" id="inmuebles"><i class='bx bxs-building'></i><span>Inmuebles</span></a></li>
         <li><a href="#" id="papeleo"><i class='bx bxs-folder'></i><span>Papeleo</span></a></li>
-        <li><a href="#" id="papelera"><i class='bx bxs-trash'></i><span>Papelera</span></a></li>
-      </ul>
+        <li><a href="#" id="papelera"><i class='bx bxs-trash'></i><span>Papelera</span></a></li>       
+         <li class="theme-switcher">
+          <button id="themeToggleBtn" class="sidebar-theme-btn" type="button" aria-pressed="false">
+            <i class='bx bx-moon'></i>
+            <span>Modo oscuro</span>
+          </button> </li>    
+          </ul>
     </div>
   </aside>
-
     <!-- SECCCION DE HOME -->
      <section class="home" id="home" >
          <!-- CIRCULOS DE FONDO --> 
@@ -71,15 +73,11 @@
                 <button id="btn_ver_inmuebles"><i class='bx bxs-building'></i>  Ver Inmuebles</button>
                 <button id="btn_crudd_papeleo"><i class='bx  bxs-folder'></i>  Papeleo</button>
                 <button id="btn_generar_Contrat"><i class='bx bxs-file'></i>  Generar contrato</button>
-            </div>
-                
+            </div>   
             </div>
         </div>
      </section>
- 
      <!-- APARTADO DE PERFIL DE USUARIO -->
-     
- 
      <!-- seccion de CRUDD INQUILINOS -->
         <section class="inquilinosCRUDD" id="inquilinosCrudd" style="display: none;">
 
@@ -87,8 +85,6 @@
                <div class="cruddicon"><i class='bx bxs-user-circle'></i></div>
                 <h2 class="Cruddtitle">🧑 Ingreso de inquilinos</h2>
             </div>
-           
-            
             <!-- diseño -->
      <div class="circle_home inquilinos"></div>
      <div class="circle_home inquilinos"></div>
@@ -102,39 +98,52 @@
      <div class="circle_home inquilinos"></div>
      <div class="circle_home inquilinos"></div>
      <div class="circle_home inquilinos"></div>
-
         <!-- contenedor del CRUDD -->
     <div class="crudd_inquilinos">
-
-     
         <form class="form_inquilinos" id="form_inquilinos">
-            <h1 class="title_crudd_inquilinos">Ingresa los datos correspondientes</h1>
-                     <i class='bxr  bxs-user a'></i> 
-           <input type="text" id="nombre_inquilino" class="input_crudd_inquilinos" placeholder=" Nombre completo" required>
-            <br>
-           <input type="text" id="cedula_inquilino" class="input_crudd_inquilinos" 
-        placeholder=" cédula (formato 000-0000000-0)" required
-        oninput="this.value = window.inquilinosBoxesSwal.formatCedula(this.value);">
-    <br>
-    <input type="text" id="telefono_inquilino" class="input_crudd_inquilinos" 
-        placeholder=" Teléfono (formato 000-000-0000)" required
-        oninput="this.value = window.inquilinosBoxesSwal.formatTelefono(this.value);">
-   
-            <br>
-            <input type="date" id ="fecha_ospedaje" class="input_crudd_inquilinos" placeholder=" Fecha de hospedaje" required>
-            <br>
-            <input type="text" id="nombre_casa_inquilino" class="input_crudd_inquilinos" placeholder="Casa (ej. A12, 10B)" list="nombre_casa_datalist" required>
-            <datalist id="nombre_casa_datalist"></datalist>
-              <br>
-            <input type="text" id="direccion_fisica_inquilino" class="input_crudd_inquilinos" placeholder=" Dirección física (opcional)" required>
-            <br>
-            <input type="number" id="fecha_pago_inquilino" class="input_crudd_inquilinos" placeholder="Día de pago (1-31)" min="1" max="31" required>
-            <br>
-            <input type="number" id="ingreso_mensual" class="input_crudd_inquilinos" placeholder=" Ingreso mensual" required>
-            <br>
-            <textarea name="descripcion" id="descripcion" placeholder=" Descripcion" rows="4" cols="50"></textarea>
-            <br>
-            <button type="button" id="btn_guardar_inquilino" class="btn">Guardar</button>
+            <div class="wizard-header">
+              <div>
+                <h1 class="title_crudd_inquilinos">Ingreso de inquilino</h1>
+                <p class="wizard-description">Completa el formulario en pasos sencillos sin desplazarte demasiado.</p>
+              </div>
+              <div class="stepper" aria-label="Progreso del formulario de inquilino">
+                <div class="stepper__item stepper__item--active" data-step="1">1. Datos</div>
+                <div class="stepper__item" data-step="2">2. Vivienda</div>
+                <div class="stepper__item" data-step="3">3. Pago</div>
+              </div>
+            </div>
+            <div class="form-step form-step--active" data-step="1">
+              <label for="nombre_inquilino">Nombre completo</label>
+              <input type="text" id="nombre_inquilino" class="input_crudd_inquilinos" placeholder="Nombre completo" required>
+              <label for="cedula_inquilino">Cédula</label>
+              <input type="text" id="cedula_inquilino" class="input_crudd_inquilinos" placeholder="000-0000000-0" required oninput="this.value = window.inquilinosBoxesSwal.formatCedula(this.value);">
+              <label for="telefono_inquilino">Teléfono</label>
+              <input type="text" id="telefono_inquilino" class="input_crudd_inquilinos" placeholder="000-000-0000" required oninput="this.value = window.inquilinosBoxesSwal.formatTelefono(this.value);">
+              <label for="fecha_ospedaje">Fecha de hospedaje</label>
+              <input type="date" id="fecha_ospedaje" class="input_crudd_inquilinos" required>
+            </div>
+            <div class="form-step" data-step="2">
+              <label for="nombre_casa_inquilino">Casa</label>
+              <input type="text" id="nombre_casa_inquilino" class="input_crudd_inquilinos" placeholder="Ej: A12, 10B" list="nombre_casa_datalist" required>
+              <datalist id="nombre_casa_datalist"></datalist>
+              <label for="direccion_fisica_inquilino">Dirección</label>
+              <input type="text" id="direccion_fisica_inquilino" class="input_crudd_inquilinos" placeholder="Dirección física (opcional)">
+              <label for="fecha_pago_inquilino">Día de pago</label>
+              <input type="number" id="fecha_pago_inquilino" class="input_crudd_inquilinos" placeholder="1-31" min="1" max="31" required>
+            </div>
+            <div class="form-step" data-step="3">
+              <label for="ingreso_mensual">Ingreso mensual</label>
+              <input type="number" id="ingreso_mensual" class="input_crudd_inquilinos" placeholder="Ingreso mensual" required>
+
+              <label for="descripcion">Notas</label>
+              <textarea name="descripcion" id="descripcion" class="input_crudd_inquilinos" placeholder="Descripción" rows="4"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn--ghost btn-step-prev" disabled>Atrás</button>
+              <button type="button" class="btn btn--primary btn-step-next">Siguiente</button>
+              <button type="button" id="btn_guardar_inquilino" class="btn btn--primary btn-step-submit hidden">Guardar</button>
+            </div>
         </form>
         </div>
     </section>
@@ -189,38 +198,47 @@
                 </div>
         
             <form action="#" class="ingresoInmu">
-                <h1>🏠 Agregar inmuebles</h1>
-                 <br>
-                <label for="N_casa">Número de casa (puede incluir letras)</label>
-                <br>
-                <input type="text" id="N_casa" placeholder="Ej: 12A, B-34, 101">
-                <br>
-                <label for="direccion">Dirección</label>
-                <br>
-                <input type="text" id="direccion">
-                <br>
-                <label for="sector">Sector</label>
-                <br>
-                <input type="text" id="sector">
-                <br>
-                <label for="municipio">Municipio</label>
-                <br>
-                <input type="text" id="municipio">
-                <br>
-                <label for="m_contruccion">M. de construcción</label>
-                <br>
-                <input type="text" id="m_contruccion">
-                <br>
-                <label for="m_terreno">M. de terreno</label>
-                <br>
-                <input type="text" id="m_terreno">
-                <br>
-                <div class="descript">
-                     <label for="descript_inmuebles">Descripcion de la casa</label>
-                <br>
-            <textarea name="descripcion" id="descript_inmuebles" placeholder=" Descripcion" rows="4" cols="50"></textarea>
-                 </div>
-                <input type="button" value="Agregar" id="agregarInmu">
+                <div class="wizard-header">
+                  <div>
+                    <h1>🏠 Agregar inmuebles</h1>
+                    <p class="wizard-description">Registra cada inmueble paso a paso sin desplazarte.</p>
+                  </div>
+                  <div class="stepper" aria-label="Progreso del formulario de inmueble">
+                    <div class="stepper__item stepper__item--active" data-step="1">1. Ubicación</div>
+                    <div class="stepper__item" data-step="2">2. Medidas</div>
+                  </div>
+                </div>
+
+                <div class="form-step form-step--active" data-step="1">
+                  <label for="N_casa">Número de casa</label>
+                  <input type="text" id="N_casa" class="input_crudd_inquilinos" placeholder="Ej: 12A, B-34, 101" required>
+
+                  <label for="direccion">Dirección</label>
+                  <input type="text" id="direccion" class="input_crudd_inquilinos" required>
+
+                  <label for="sector">Sector</label>
+                  <input type="text" id="sector" class="input_crudd_inquilinos" required>
+
+                  <label for="municipio">Municipio</label>
+                  <input type="text" id="municipio" class="input_crudd_inquilinos" required>
+                </div>
+
+                <div class="form-step" data-step="2">
+                  <label for="m_contruccion">M. de construcción</label>
+                  <input type="text" id="m_contruccion" class="input_crudd_inquilinos">
+
+                  <label for="m_terreno">M. de terreno</label>
+                  <input type="text" id="m_terreno" class="input_crudd_inquilinos">
+
+                  <label for="descript_inmuebles">Descripción de la casa</label>
+                  <textarea name="descripcion" id="descript_inmuebles" class="input_crudd_inquilinos" placeholder="Descripción" rows="4"></textarea>
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="btn btn--ghost btn-step-prev" disabled>Atrás</button>
+                  <button type="button" class="btn btn--primary btn-step-next">Siguiente</button>
+                  <input type="button" value="Agregar" id="agregarInmu" class="btn btn--primary btn-step-submit hidden">
+                </div>
             </form>
            
       </section>
@@ -295,25 +313,25 @@
 </section>
 
 
-<script src="/JS/Animations.js"></script>
-<script src="/JS/receipts.js"></script>
-<script src="/JS/sidebar.js"></script>
-<script src="/JS/papelera.js"></script>
+<script src="/GOHOME/public/JS/Animations.js"></script>
+<script src="/GOHOME/public/JS/receipts.js"></script>
+<script src="/GOHOME/public/JS/sidebar.js"></script>
+<script src="/GOHOME/public/JS/papelera.js"></script>
 <!-- Sistema de sincronización offline -->
-<script src="/JS/sync.js"></script>
-<script src="/JS/api-client.js"></script>
-<script src="/JS/notification.js"></script>
-<script src="/JS/inmuebles.js"></script>
-<script src="/JS/papeleo.js"></script>
-<script src="/JS/SIDE.js"></script>
-<script src="/JS/contratos.js"></script>
-<script src="/JS/poblar_select.js"></script>
-<script src="/JS/s_alserver.js"></script>
-<script src="/JS/agregar_inquilino.js"></script>
-<script src="/JS/SEARCHBARINQUI.JS"></script>
-<script src="/JS/PAGOS_VENCIDOS_PROGRESIVOS.js"></script>
-<script src="/JS/login_registrer.js"></script>
-<script src="/JS/pwa.js"></script>
+<script src="/GOHOME/public/JS/sync.js"></script>
+<script src="/GOHOME/public/JS/api-client.js"></script>
+<script src="/GOHOME/public/JS/notification.js"></script>
+<script src="/GOHOME/public/JS/inmuebles.js"></script>
+<script src="/GOHOME/public/JS/papeleo.js"></script>
+<script src="/GOHOME/public/JS/SIDE.js"></script>
+<script src="/GOHOME/public/JS/contratos.js"></script>
+<script src="/GOHOME/public/JS/poblar_select.js"></script>
+<script src="/GOHOME/public/JS/s_alserver.js"></script>
+<script src="/GOHOME/public/JS/agregar_inquilino.js"></script>
+<script src="/GOHOME/public/JS/SEARCHBARINQUI.JS"></script>
+<script src="/GOHOME/public/JS/PAGOS_VENCIDOS_PROGRESIVOS.js"></script>
+<script src="/GOHOME/public/JS/login_registrer.js"></script>
+<script src="/GOHOME/public/JS/pwa.js"></script>
 
 
 <!-- Profile popup (dinámico) -->

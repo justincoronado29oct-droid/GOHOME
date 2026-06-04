@@ -5,22 +5,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // ======= BOTÓN CREAR CARPETA =======
   const btnNuevaCarpeta = document.createElement("button");
   btnNuevaCarpeta.textContent = "+ Nueva Carpeta";
- btnNuevaCarpeta.style.cssText = `
-    background-color: #6a0dad;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    margin: 20px auto;
-    display: block;
-    position:relative;
-    z-index:40;
-    transition: background 0.3s;
-  `;
-  btnNuevaCarpeta.onmouseover = () => (btnNuevaCarpeta.style.backgroundColor = "#8b22e8");
-  btnNuevaCarpeta.onmouseout = () => (btnNuevaCarpeta.style.backgroundColor = "#6a0dad");
+  btnNuevaCarpeta.className = 'btn btn--primary btn-new-folder';
+  btnNuevaCarpeta.style.margin = '20px auto';
+  btnNuevaCarpeta.style.display = 'block';
+  btnNuevaCarpeta.style.position = 'relative';
+  btnNuevaCarpeta.style.zIndex = '40';
   papeleoLista.before(btnNuevaCarpeta);
 
   // ======= ESTILOS DE GRID =======
@@ -39,41 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
     carpetas.forEach((carpeta, index) => {
       const div = document.createElement("div");
       div.classList.add("carpeta");
-     div.style.cssText = `
-        background-color: #7200a1;
-        border-radius: 15px;
-        color: white;
-        text-align: center;
-        padding: 25px 10px;
-        font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        position: relative;
-        z-index:40;
-        left:50px;
-        cursor: pointer;
-        transition: transform 0.2s ease, background 0.3s ease;
-      `;
-      div.onmouseover = () => (div.style.backgroundColor = "#8b22e8");
-      div.onmouseout = () => (div.style.backgroundColor = "#7200a1");
       div.innerHTML = `
-        <div style="font-size: 18px; margin-bottom: 10px;">📁 ${carpeta.nombre}</div>
-        <button class="btn-ver" style="
-          background:#fff;
-          color:#7200a1;
-          border:none;
-          padding:6px 12px;
-          border-radius:8px;
-          font-size:13px;
-          cursor:pointer;">Ver archivos</button>
-        <button class="btn-eliminar" style="
-          background:#ff5555;
-          color:#fff;
-          border:none;
-          padding:6px 12px;
-          border-radius:8px;
-          font-size:13px;
-          cursor:pointer;
-          margin-top:8px;">Eliminar</button>
+        <div class="carpeta__title">📁 ${carpeta.nombre}</div>
+        <button type="button" class="btn btn--secondary btn-ver">Ver archivos</button>
+        <button type="button" class="btn btn--danger btn-eliminar">Eliminar</button>
       `;
 
       // ======= VER ARCHIVOS =======

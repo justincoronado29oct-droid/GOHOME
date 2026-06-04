@@ -1,17 +1,3 @@
- const sidebar = document.getElementById("sidebar");
-  const toggleBtn = document.getElementById("toggleBtn");
-
- 
-  if (sidebar && toggleBtn) {
-    toggleBtn.addEventListener("click", () => {
-      sidebar.classList.toggle("open");
-      toggleBtn.innerHTML = sidebar.classList.contains("open")
-        ? "<i class='bx bx-chevron-left'></i>"
-        : "<i class='bx bx-chevron-right'></i>";
-    });
-  }
-
-
 // ======================================================
   // 🔹 EVENTO TOGGLE DEL SIDEBAR
   // ======================================================
@@ -33,169 +19,40 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Inicializar ARIA
-  const isCollapsed = sidebar.classList.contains('collapsed');
+  const isOpen = sidebar.classList.contains('open');
   toggleBtn.setAttribute('role', 'button');
-  toggleBtn.setAttribute('aria-expanded', (!isCollapsed).toString());
+  toggleBtn.setAttribute('aria-expanded', isOpen.toString());
 
-  // Manejar el click (alternamos la clase 'collapsed' en el sidebar)
-  toggleBtn.addEventListener('click', () => {
-    const collapsedNow = sidebar.classList.toggle('collapsed');
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const themeIcon = themeToggleBtn ? themeToggleBtn.querySelector('i') : null;
+  const themeLabel = themeToggleBtn ? themeToggleBtn.querySelector('span') : null;
 
-    // aria-expanded = true cuando el sidebar está abierto => !collapsedNow
-    toggleBtn.setAttribute('aria-expanded', (!collapsedNow).toString());
+  const setTheme = (mode) => {
+    document.body.classList.toggle('theme-dark', mode === 'dark');
+    document.body.classList.toggle('theme-light', mode === 'light');
+    if (themeToggleBtn) {
+      themeToggleBtn.setAttribute('aria-pressed', (mode === 'dark').toString());
+      themeToggleBtn.setAttribute('aria-label', mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+    }
+    if (themeIcon) {
+      themeIcon.className = 'bx ' + (mode === 'dark' ? 'bx-sun' : 'bx-moon');
+    }
+    if (themeLabel) {
+      themeLabel.textContent = mode === 'dark' ? 'Modo claro' : 'Modo oscuro';
+    }
+    localStorage.setItem('gohome-theme', mode);
+  };
 
-    // actualizar solo la clase del icono (no tocar innerHTML)
-    icon.className = 'bx ' + (collapsedNow ? 'bx-chevron-right' : 'bx-chevron-left');
-  });
+  const storedTheme = localStorage.getItem('gohome-theme');
+  const preferredTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  setTheme(storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : preferredTheme);
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+      const nextMode = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
+      setTheme(nextMode);
+    });
+  }
 });
-
-
-
-// ======================================================
-// 🔹 CONTROL DE NAVEGACIÓN DE SECCIONES (SIDEBAR)
-// ======================================================
-(() => {
-  const sectionMap = {
-  hom: 'home',
-  add_inqui: 'inquilinosCrudd',
-  add_house: 'CRUDDinmu',
-  inquilinos: 'INQUILINOS',
-  inmuebles: 'INMUEBLES',
-  papeleo: 'papeleo_section',
-  papelera: 'papelera_section',
-  p_pendientes: 'pagos_pendientes',
-  p_incompletos: 'pagos_incompletos'
-};
-
-
-const possibleSections = Array.from(new Set([
-  ...Object.values(sectionMap),
-  'home',
-  'inquilinosCrudd',
-  'INQUILINOS',
-  'INMUEBLES',
-  'papeleo_section',
-  'papelera_section'
-]));
-
-
-  const getDomElements = () => {
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggleBtn');
-    const sidebarLinks = document.querySelectorAll('.side_list a');
-    const stageSections = possibleSections.map(id => document.getElementById(id)).filter(Boolean);
-
-    if (!sidebar || sidebarLinks.length === 0) return null;
-    return { sidebar, toggleBtn, sidebarLinks, stageSections };
-  };
-
-  let dom = null;
-
-  const hideAll = () => dom.stageSections.forEach(sec => sec.style.display = 'none');
-  const clearActive = () => dom.sidebarLinks.forEach(a => a.classList.remove('active'));
-  const normalize = id => id.toLowerCase();
-
-  const showSectionById = (id) => {
-    let section = document.getElementById(id) || document.getElementById(normalize(id));
-    if (!section) return showSectionById('home');
-    hideAll();
-    section.style.display = 'block';
-    history.replaceState(null, '', `#${normalize(id)}`);
-  };
-
-  const findLinkFor = (id) => {
-    const normalized = normalize(id);
-    return Array.from(dom.sidebarLinks).find(a => {
-      const mapped = sectionMap[a.id];
-      return mapped && normalize(mapped) === normalized;
-    });
-  };
-
-  const setupNav = () => {
-    dom.sidebarLinks.forEach(link => {
-      link.addEventListener('click', e => {
-        e.preventDefault();
-        const target = sectionMap[link.id];
-        if (!target) return;
-        clearActive();
-        link.classList.add('active');
-        showSectionById(target);
-      });
-    });
-  };
-
-  const setupInternalButtons = () => {
-    const buttons = [
-      { id: 'btn_crudd_inquilinos', target: 'inquilinosCrudd' },
-      { id: 'btn_crudd_inmuebles', target: 'CRUDDinmu' },
-      { id: 'btn_ver_inquilinos', target: 'inquilinosCrudd' },
-      { id: 'btn_ver_inmuebles', target: 'CRUDDinmu' },
-      { id: 'papeleo', target: 'papeleo_section' },
-      { id: 'btn_crudd_pagos_incompletos', target: 'pagos_incompletos' },
-      { id: 'btn_pagos_pendientes', target: 'pagos_pendientes' },
-      { id: 'papelera', target: 'papelera_section' }
-    ];
-
-    buttons.forEach(cfg => {
-      const btn = document.getElementById(cfg.id);
-      if (!btn) return;
-      btn.addEventListener('click', () => {
-        clearActive();
-        const link = findLinkFor(cfg.target);
-        if (link) link.classList.add('active');
-        showSectionById(cfg.target);
-      });
-    });
-  };
-
-  const setupToggle = () => {
-    const { sidebar, toggleBtn } = dom;
-    if (!toggleBtn) return;
-    toggleBtn.setAttribute('role', 'button');
-    toggleBtn.setAttribute('aria-expanded', 'true');
-    toggleBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-      const icon = toggleBtn.querySelector('i');
-      if (icon) icon.classList.toggle('rotated');
-      toggleBtn.setAttribute('aria-expanded', (!sidebar.classList.contains('collapsed')).toString());
-    });
-  };
-
-  const initFromHash = () => {
-    const hash = location.hash.replace('#', '');
-    const initial = normalize(hash || 'home');
-    showSectionById(initial);
-    clearActive();
-    const activeLink = findLinkFor(initial);
-    if (activeLink) activeLink.classList.add('active');
-  };
-
-  const setupHashChange = () => {
-    window.addEventListener('hashchange', () => {
-      const hash = location.hash.replace('#', '');
-      if (hash) {
-        showSectionById(hash);
-        clearActive();
-        const link = findLinkFor(hash);
-        if (link) link.classList.add('active');
-      }
-    });
-  };
-
-  const init = () => {
-    dom = getDomElements();
-    if (!dom) return;
-    setupNav();
-    setupInternalButtons();
-    setupToggle();
-    initFromHash();
-    setupHashChange();
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }  }) ()
 
  

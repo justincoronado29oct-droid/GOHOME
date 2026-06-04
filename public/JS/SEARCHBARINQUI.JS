@@ -44,7 +44,6 @@
     // campos buscables: intenta leer elementos comunes de tu estructura
     const nameEl = box.querySelector('.name');
     const metaEl = box.querySelector('.meta');
-    const timerEl = box.querySelector('.timer');
     const descEl = box.querySelector('textarea, .descripcion, .desc') || box.querySelector('.descripcion') || null;
 
     const nombre = nameEl ? nameEl.innerText : (box.dataset.nombre || '');
