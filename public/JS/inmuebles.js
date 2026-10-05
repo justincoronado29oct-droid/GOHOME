@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputDescripcion = document.getElementById('descript_inmuebles');
   const contenedorInmuebles = document.querySelector('.box_container_inmuebles');
 
-  const formInmuebles = document.querySelector('.ingresoInmu');
   const inmuebleSteps = formInmuebles ? Array.from(formInmuebles.querySelectorAll('.form-step')) : [];
   const inmuebleStepperItems = formInmuebles ? Array.from(formInmuebles.querySelectorAll('.stepper__item')) : [];
   const inmueblePrev = formInmuebles ? formInmuebles.querySelector('.btn-step-prev') : null;
@@ -489,7 +488,14 @@ console.log("Datos enviados al servidor:", nuevoInmueble);
 serverResp = Array.isArray(res.data) ? res.data[0] : res.data;
     } catch (err) {
       console.warn('⚠️ No se pudo guardar en el servidor:', err);
-      Swal.fire('Error', 'No se pudo guardar el inmueble en la base de datos. Verifica la conexión al servidor.', 'error');
+      guardarLocalStorage(nuevoInmueble);
+      if (window.syncManager && typeof window.syncManager.addToQueue === 'function') {
+        window.syncManager.addToQueue('POST', API_BASE, _mapInmuebleClientToServer(nuevoInmueble));
+      }
+      crearCajaInmueble(nuevoInmueble);
+      Swal.fire('Guardado localmente', 'No se pudo conectar al servidor. El inmueble se guardó en LocalStorage y se sincronizará cuando el servidor vuelva.', 'success');
+      [inputN_casa, inputDireccion, inputSector, inputMunicipio, inputM_contruccion, inputM_terreno, inputDescripcion].forEach(i => i.value = '');
+      if (typeof cargarInmuebles === 'function') await cargarInmuebles();
       return;
     }
 

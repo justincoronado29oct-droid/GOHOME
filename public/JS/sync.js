@@ -128,7 +128,22 @@ class SyncManager {
     }
 
     console.log(`🔄 Sincronizando ${queue.length} cambios pendientes...`);
+    // Intentar enviar la cola completa al endpoint centralizado en el servidor
+    try {
+      const syncUrl = (typeof window.apiUrl === 'function') ? window.apiUrl('sync/queue') : '/sync/queue';
+      const resp = await fetch(syncUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(queue), cache: 'no-store' });
+      if (resp.ok || resp.status === 202) {
+        console.log('✅ Cola enviada al servidor para sincronización');
+        this.clearQueue();
+        this.syncInProgress = false;
+        return;
+      }
+      console.warn('⚠️ El servidor no aceptó la cola completa, intentando sincronización individual');
+    } catch (e) {
+      console.warn('⚠️ No se pudo enviar la cola completa al servidor:', e.message);
+    }
 
+    // Fallback: intentar sincronizar ítem por ítem (comportamiento previo)
     for (const item of queue) {
       try {
         const options = {
@@ -221,3 +236,4 @@ class SyncManager {
 
 // Instanciar el manager globalmente
 const syncManager = new SyncManager();
+window.syncManager = syncManager;

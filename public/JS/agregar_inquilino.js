@@ -105,6 +105,15 @@
     const q = readDeleteQueue().filter(x => String(x.id) !== String(id));
     writeDeleteQueue(q);
   }
+  function queueOfflineSync(method, endpoint, data) {
+    if (typeof window.syncManager === 'object' && typeof window.syncManager.addToQueue === 'function') {
+      try {
+        window.syncManager.addToQueue(method, endpoint, data);
+      } catch (e) {
+        console.warn('No se pudo encolar el cambio offline:', e);
+      }
+    }
+  }
 
   // Papelera helpers (local)
   function readTrash() {
@@ -465,7 +474,6 @@
     box.className = 'inquilino-box';
     box.dataset.id = item.id;
     box.dataset.status = 'AL_DIA';
-
     box.dataset.nombre = (item.nombre || '').toString();
     box.dataset.cedula = (item.cedula || '').toString();
     box.dataset.N_casa = (item.N_casa || '').toString();
@@ -1193,7 +1201,20 @@
       }
     } catch (e) {
       console.warn('POST inquilino failed', e);
-      Swal.fire({ title: 'Error', text: 'No se pudo guardar el inquilino en la base de datos. Verifica la conexión al servidor.', icon: 'error', confirmButtonColor: '#ef4444' });
+      try { const arr = readBoxesStorage(); arr.unshift(item); writeBoxesStorage(arr); } catch(e2){ console.warn(e2); }
+      queueOfflineSync('POST', window.apiUrl('inquilinos'), {
+        nombre: item.nombre,
+        cedula: item.cedula,
+        telefono: item.telefono,
+        direccion: item.direccion,
+        fecha_ospedaje: item.fecha_ospedaje,
+        ingreso_mensual: item.ingreso_mensual,
+        descripcion: item.descripcion,
+        N_casa: item.N_casa
+      });
+      createBox(item);
+      if (form) form.reset();
+      Swal.fire({ title: 'Guardado localmente', text: 'No se pudo conectar al servidor. El inquilino se guardó en LocalStorage y se sincronizará cuando el servidor esté disponible.', icon: 'success', confirmButtonColor: '#10b981' });
       return;
     }
 

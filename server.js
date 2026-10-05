@@ -48,13 +48,43 @@ if (process.env.FORCE_HTTPS === '1') {
 // ----------------- CONFIG DB -----------------
 // IMPORTANT: move secrets to environment (.env) and DO NOT commit .env to git
 const mysql = require("mysql2/promise");
+const fs = require('fs');
+
+function parseMyCnf() {
+  const configPath = path.join(__dirname, '.my.cnf');
+  try {
+    const content = fs.readFileSync(configPath, 'utf8');
+    const sectionMatch = content.match(/\[client\]([\s\S]*?)(\n\[|$)/i);
+    if (!sectionMatch) return {};
+    const section = sectionMatch[1];
+    return section.split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#') && !line.startsWith(';'))
+      .reduce((acc, line) => {
+        const [key, ...rest] = line.split('=');
+        if (!key || rest.length === 0) return acc;
+        acc[key.trim()] = rest.join('=').trim();
+        return acc;
+      }, {});
+  } catch (err) {
+    return {};
+  }
+}
+
+const myCnf = parseMyCnf();
+const dbDefaults = {
+  host: '127.0.0.1',
+  port: 3306,
+  user: 'root',
+  database: 'gohome_db'
+};
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  port: Number(process.env.DB_PORT),
+  host: process.env.DB_HOST || myCnf.host || dbDefaults.host,
+  user: process.env.DB_USER || myCnf.user || dbDefaults.user,
+  password: process.env.DB_PASS || myCnf.password || '',
+  database: process.env.DB_NAME || myCnf.database || dbDefaults.database,
+  port: Number(process.env.DB_PORT || myCnf.port || dbDefaults.port),
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -68,16 +98,26 @@ const pool = mysql.createPool({
 
 // Test inicial de conexión (sin bloquear startup)
 let dbConnected = false;
+let dbReconnectTimer = null;
+
+function scheduleDBReconnect(delayMs = 10000) {
+  if (dbReconnectTimer) return;
+  dbReconnectTimer = setTimeout(() => {
+    dbReconnectTimer = null;
+    ensureDBConnection();
+  }, delayMs);
+}
+
 (async () => {
   try {
     const conn = await pool.getConnection();
-    console.log(`✅ Conectado a MySQL en ${process.env.DB_HOST}:${process.env.DB_PORT}`);
+    console.log(`✅ Conectado a MySQL en ${process.env.DB_HOST || myCnf.host || dbDefaults.host}:${process.env.DB_PORT || myCnf.port || dbDefaults.port}`);
     dbConnected = true;
     conn.release();
   } catch (err) {
     console.error(`⚠️ Error inicial conectando a la base de datos: ${err.message}`);
     console.error(`   Reintentando en 5s...`);
-    setTimeout(() => ensureDBConnection(), 5000);
+    scheduleDBReconnect(5000);
   }
 })();
 
@@ -91,7 +131,7 @@ async function ensureDBConnection() {
     conn.release();
   } catch (err) {
     console.error(`⚠️ Reintentando conexión DB...`, err.message);
-    setTimeout(() => ensureDBConnection(), 10000);
+    scheduleDBReconnect();
   }
 }
 
@@ -103,11 +143,16 @@ async function query(sql, params = [], retries = 3) {
       if (attempt > 1) {
         console.log(`✅ Query exitoso en intento ${attempt}`);
         dbConnected = true;
+        if (dbReconnectTimer) {
+          clearTimeout(dbReconnectTimer);
+          dbReconnectTimer = null;
+        }
       }
       return rows;
     } catch (err) {
       if (attempt === retries) {
         dbConnected = false;
+        scheduleDBReconnect();
         throw err;
       }
       if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNREFUSED') {
@@ -149,6 +194,213 @@ function safeFloat(v, fallback = null) {
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
+// ----------------- SYNC QUEUE (persistente en disco) -----------------
+const fsp = fs.promises;
+const DATA_DIR = path.join(__dirname, 'data');
+const QUEUE_FILE = path.join(DATA_DIR, 'sync_queue.json');
+
+async function ensureDataDir() {
+  try {
+    await fsp.mkdir(DATA_DIR, { recursive: true });
+  } catch (e) { /* ignore */ }
+}
+
+async function loadQueue() {
+  try {
+    const content = await fsp.readFile(QUEUE_FILE, 'utf8');
+    return JSON.parse(content || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+async function saveQueue(arr) {
+  try {
+    await ensureDataDir();
+    await fsp.writeFile(QUEUE_FILE, JSON.stringify(arr, null, 2), 'utf8');
+  } catch (e) {
+    console.error('No se pudo guardar la cola en disco:', e.message);
+  }
+}
+
+async function pushToQueue(item) {
+  const q = await loadQueue();
+  q.push(item);
+  await saveQueue(q);
+}
+
+function normalizePathFromEndpoint(endpoint) {
+  try {
+    const u = new URL(endpoint, 'http://localhost');
+    return u.pathname || endpoint;
+  } catch (e) {
+    return endpoint;
+  }
+}
+
+// Procesador básico de items en cola que aplica operaciones al DB
+async function processQueueItem(item) {
+  // item: { method, endpoint, data, timestamp, clientId }
+  const method = (item.method || 'POST').toUpperCase();
+  const endpoint = normalizePathFromEndpoint(item.endpoint || item.path || '');
+  const data = item.data || item.body || item.payload || {};
+
+  try {
+    if (method === 'POST' && endpoint.startsWith('/inquilinos')) {
+      // Reusar lógica del endpoint POST /inquilinos
+      const { nombre, cedula, telefono, direccion, fecha_ospedaje, ingreso_mensual, descripcion, pago, N_casa } = data;
+      // Si N_casa se provee pero inmueble no existe, crear error y skip
+      if (N_casa != null) {
+        const inm = await getInmuebleByNCasa(N_casa);
+        if (!inm) {
+          console.warn('Skip inquilino en cola: inmueble no encontrado', N_casa);
+          return { ok: false, reason: 'inmueble_missing' };
+        }
+      }
+      const res = await query(
+        `INSERT INTO inquilinos (nombre, cedula, telefono, direccion, fecha_ospedaje, ingreso_mensual, descripcion, pago, N_casa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [nombre, cedula, telefono, direccion, fecha_ospedaje, safeFloat(ingreso_mensual, 0), descripcion || null, pago == null ? null : safeFloat(pago, null), N_casa == null ? null : String(N_casa).trim()]
+      );
+      return { ok: true, insertedId: res.insertId };
+    }
+
+    if (method === 'POST' && endpoint.startsWith('/inmuebles')) {
+      const { N_casa, direccion, sector, municipio, m_contruccion, m_terreno, descripcion } = data;
+      try {
+        const res = await query(`INSERT INTO inmuebles (N_casa, direccion, sector, municipio, m_contruccion, m_terreno, descripcion) VALUES (?, ?, ?, ?, ?, ?, ?)`, [String(N_casa||'').trim(), direccion||'', sector||'', municipio||'', m_contruccion||'', m_terreno||'', descripcion||'']);
+        return { ok: true, insertedId: res.insertId };
+      } catch (e) {
+        // Si ya existe N_casa, intentar UPDATE en su lugar
+        if (e && e.code === 'ER_DUP_ENTRY') {
+          await query(`UPDATE inmuebles SET direccion = ?, sector = ?, municipio = ?, m_contruccion = ?, m_terreno = ?, descripcion = ? WHERE N_casa = ?`, [direccion||'', sector||'', municipio||'', m_contruccion||'', m_terreno||'', descripcion||'', String(N_casa||'').trim()]);
+          return { ok: true, updated: true };
+        }
+        throw e;
+      }
+    }
+
+    if (method === 'POST' && endpoint.startsWith('/papelera')) {
+      const tipo = data.tipo || 'unknown';
+      const objeto = data.objeto != null ? JSON.stringify(data.objeto) : JSON.stringify(data);
+      const res = await query(`INSERT INTO papelera (tipo, objeto) VALUES (?, ?)`, [tipo, objeto]);
+      return { ok: true, insertedId: res.insertId };
+    }
+
+    if (['POST', 'PUT', 'DELETE'].includes(method) && endpoint.startsWith('/pagos_pendientes')) {
+      if (method === 'POST') {
+        const { id_inquilino, monto } = data;
+        const res = await query(`INSERT INTO pagos_pendientes (id_inquilino, monto) VALUES (?, ?)`, [id_inquilino || null, safeFloat(monto, 0)]);
+        return { ok: true, insertedId: res.insertId };
+      }
+      if (method === 'PUT') {
+        const id = data.id || data.id_inquilino || null;
+        if (!id) return { ok: false, reason: 'missing_id' };
+        const fields = Object.entries(data).filter(([key]) => key !== 'id').map(([key]) => `${key} = ?`).join(', ');
+        const params = Object.entries(data).filter(([key]) => key !== 'id').map(([, value]) => value);
+        if (!fields) return { ok: false, reason: 'no_fields' };
+        await query(`UPDATE pagos_pendientes SET ${fields} WHERE id = ?`, [...params, id]);
+        return { ok: true, updated: true };
+      }
+      if (method === 'DELETE') {
+        const id = data.id || data.id_inquilino || null;
+        if (!id) return { ok: false, reason: 'missing_id' };
+        await query('DELETE FROM pagos_pendientes WHERE id = ?', [id]);
+        return { ok: true, deleted: true };
+      }
+    }
+
+    if (['POST', 'PUT', 'DELETE'].includes(method) && endpoint.startsWith('/pagos_incompletos')) {
+      if (method === 'POST') {
+        const { id_inquilino, monto, usuario_id, metadata, raw } = data;
+        const res = await query(`INSERT INTO pagos_incompletos (id_inquilino, monto, usuario_id, metadata, raw) VALUES (?, ?, ?, ?, ?)`, [id_inquilino || null, safeFloat(monto, 0), usuario_id || null, metadata ? JSON.stringify(metadata) : null, raw || null]);
+        return { ok: true, insertedId: res.insertId };
+      }
+      if (method === 'PUT') {
+        const id = data.id || null;
+        if (!id) return { ok: false, reason: 'missing_id' };
+        const fields = Object.entries(data).filter(([key]) => key !== 'id').map(([key]) => `${key} = ?`).join(', ');
+        const params = Object.entries(data).filter(([key]) => key !== 'id').map(([, value]) => value);
+        if (!fields) return { ok: false, reason: 'no_fields' };
+        await query(`UPDATE pagos_incompletos SET ${fields} WHERE id = ?`, [...params, id]);
+        return { ok: true, updated: true };
+      }
+      if (method === 'DELETE') {
+        const id = data.id || null;
+        if (!id) return { ok: false, reason: 'missing_id' };
+        await query('DELETE FROM pagos_incompletos WHERE id = ?', [id]);
+        return { ok: true, deleted: true };
+      }
+    }
+
+    // Fallback: attempt to forward the queued request to the server's own endpoint
+    if (endpoint && endpoint !== '/sync/queue') {
+      try {
+        const targetUrl = `http://127.0.0.1:${PORT}${endpoint}`;
+        const fetched = await fetch(targetUrl, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: data ? JSON.stringify(data) : undefined
+        });
+
+        if (fetched.ok) {
+          return { ok: true, forwarded: true, status: fetched.status };
+        }
+
+        const errorText = await fetched.text();
+        console.warn('Fallback forwarding falló:', method, endpoint, fetched.status, errorText);
+        return { ok: false, reason: 'forward_failed', status: fetched.status, error: errorText };
+      } catch (innerErr) {
+        console.error('Error forwarding queued request:', innerErr.message);
+        return { ok: false, reason: 'forward_exception', error: innerErr.message };
+      }
+    }
+
+    console.warn('No hay handler para item de cola:', method, endpoint);
+    return { ok: false, reason: 'no_handler' };
+  } catch (e) {
+    console.error('Error procesando item de cola:', e.message);
+    return { ok: false, error: e.message };
+  }
+}
+
+async function processQueueAll() {
+  if (!dbConnected) return;
+  const q = await loadQueue();
+  if (!q || q.length === 0) return;
+  console.log(`🔁 Procesando cola de sincronización (${q.length} items)...`);
+  const remaining = [];
+  for (const item of q) {
+    try {
+      const r = await processQueueItem(item);
+      if (!r || !r.ok) {
+        // mantener el item para reintentos, pero si la razón es 'inmueble_missing' o 'no_handler' descartarlo
+        if (r && (r.reason === 'inmueble_missing' || r.reason === 'no_handler')) {
+          console.warn('Descartando item en cola:', r.reason);
+          continue;
+        }
+        // incrementar intentos y conservar
+        item.retries = (item.retries || 0) + 1;
+        if (item.retries > 10) {
+          console.error('Item descartado por demasiados reintentos:', item);
+          continue;
+        }
+        remaining.push(item);
+      } else {
+        console.log('Item sincronizado:', item.endpoint, item.method || 'POST');
+      }
+    } catch (e) {
+      console.error('Procesamiento falló para item, reencolando:', e.message);
+      item.retries = (item.retries || 0) + 1;
+      remaining.push(item);
+    }
+  }
+  await saveQueue(remaining);
+}
+
+// iniciar procesamiento periódico (intentar cada 5s si dbConnected)
+setInterval(() => {
+  if (dbConnected) processQueueAll().catch(e => console.warn('processQueueAll err', e));
+}, 5000);
 // ----------------- ENSURE TABLES -----------------
 async function ensureAllTables() {
   try {
@@ -851,32 +1103,47 @@ app.delete('/papelera/:id', async (req, res) => {
   }
 });
 
-// DATA_USUARIOS / INFO_USUARIOS (usar info_usuarios según esquema)
-
-app.get('/info_usuarios', async (req, res) => {
+// ----------------- SYNC endpoints -----------------
+// Recibe uno o varios items en cola desde el cliente para persistir en el servidor
+app.post('/sync/queue', async (req, res) => {
   try {
-    const rows = await query('SELECT * FROM info_usuarios ORDER BY id DESC');
-    res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error leyendo info_usuarios' });
+    const payload = req.body;
+    const items = Array.isArray(payload) ? payload : [payload];
+    const timestamp = Date.now();
+    for (const it of items) {
+      const item = {
+        method: (it.method || 'POST').toUpperCase(),
+        endpoint: it.endpoint || it.path || it.url || '',
+        data: it.data || it.body || it.payload || it,
+        timestamp: it.timestamp || timestamp,
+        clientId: it.clientId || null,
+        retries: it.retries || 0
+      };
+      await pushToQueue(item);
+    }
+
+    // intentar procesar inmediatamente si la DB está conectada
+    if (dbConnected) {
+      processQueueAll().catch(e => console.warn('processQueueAll after /sync/queue', e));
+    }
+
+    res.status(202).json({ queued: true, count: items.length });
+  } catch (e) {
+    console.error('Error recibiendo cola desde cliente:', e.message);
+    res.status(500).json({ error: 'No se pudo procesar la cola' });
   }
 });
 
-app.post('/info_usuarios', async (req, res) => {
+app.get('/sync/queue', async (req, res) => {
   try {
-    const { nombre, apellido, N_usuario, gmail, contrasena } = req.body;
-    const result = await query(
-      `INSERT INTO info_usuarios (nombre, apellido, N_usuario, gmail, contrasena)
-       VALUES (?, ?, ?, ?, ?)`,
-      [nombre || null, apellido || null, N_usuario || null, gmail || null, contrasena || null]
-    );
-    const inserted = await query('SELECT * FROM info_usuarios WHERE id = ?', [result.insertId]);
-    res.status(201).json(inserted[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error creando info_usuario' });
-  }
+    const q = await loadQueue();
+    res.json(q);
+  } catch (e) { res.status(500).json({ error: 'No se pudo leer la cola' }); }
+});
+
+app.get('/sync/status', (req, res) => {
+  const info = { dbConnected, queueLength: null };
+  loadQueue().then(q => { info.queueLength = (q||[]).length; res.json(info); }).catch(() => { info.queueLength = null; res.json(info); });
 });
 
 // ---------- USERS / info_usuarios / auth ----------
@@ -1169,10 +1436,9 @@ setInterval(() => checkDueNotifications().catch(console.error), 10 * 60 * 1000);
 // health
 app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime(), timestamp: Date.now() }));
 
-// Servir la aplicación cliente para rutas SPA después de las API
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Nota: no se registra ruta catch-all SPA para evitar compatibilidad con ciertos
+// motores de routing en entornos locales. Los archivos estáticos ya se sirven
+// mediante express.static arriba.
 
 // ----------------- START SERVER -----------------
 let server = null;
